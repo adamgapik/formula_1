@@ -4,27 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>F1 2026 // CALENDAR</title>
-    <style>
-        *{margin:0;padding:0;box-sizing:border-box;}
-        body{background:#03050a;font-family:'Inter',monospace;color:#eef2ff;padding:24px;}
-        .container{max-width:1400px;margin:0 auto;}
-        .nav{
-            display:flex;flex-wrap:wrap;justify-content:center;gap:12px;
-            margin-bottom:48px;padding:8px 24px;border-bottom:1px solid #ff003c;
-            box-shadow:0 0 6px #ff003c;
-        }
-        .nav a{color:#b0c4de;text-decoration:none;font-weight:700;padding:8px 24px;}
-        .nav a.active,.nav a:hover{background:#ff003c;color:#000;box-shadow:0 0 12px #ff003c;}
-        h1{font-size:28px;font-weight:800;margin-bottom:28px;border-left:4px solid #00c8ff;padding-left:18px;text-shadow:0 0 5px #00c8ff;}
-        .race-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;}
-        .race-card{background:#0b0e14;border:1px solid #ff003c;padding:18px;transition:0.1s;}
-        .race-card:hover{border-color:#00c8ff;box-shadow:0 0 8px #00c8ff;}
-        .race-header{display:flex;justify-content:space-between;margin-bottom:12px;color:#ff003c;font-weight:700;}
-        .race-name{font-size:18px;font-weight:800;margin-bottom:6px;}
-        .race-status{display:inline-block;margin-top:12px;padding:4px 12px;background:#1a1e2a;color:#b0c4de;font-size:11px;}
-        .winner{margin-top:12px;color:#00c8ff;font-weight:700;}
-        .footer{margin-top:64px;padding:24px;text-align:center;border-top:1px solid #ff003c;}
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="container">
@@ -34,47 +14,48 @@
         <a href="teams.html">TEAMS</a>
         <a href="calendar.html" class="active">CALENDAR</a>
         <a href="news.html">NEWS</a>
+        <a href="games.html">GAMES</a>
     </div>
     <h1>📅 2026 RACE CALENDAR</h1>
     <div class="race-grid" id="calendarGrid"><div>⏳ LOADING</div></div>
     <div class="footer">WINNERS APPEAR AFTER GP</div>
 </div>
 <script>
-    const SEASON=2026;
-    const BASE=`https://api.jolpi.ca/ergast/f1/${SEASON}`;
-    async function loadCalendar(){
-        const grid=document.getElementById('calendarGrid');
-        try{
-            const sched=await fetch(`${BASE}.json`);
-            const data=await sched.json();
-            const races=data?.MRData?.RaceTable?.Races||[];
-            grid.innerHTML='';
-            const now=new Date();
-            for(let r of races){
-                const raceDate=new Date(r.date);
-                const isPast=raceDate<now;
-                let winnerHtml='';
-                if(isPast){
-                    try{
-                        const res=await fetch(`${BASE}/${r.round}/results.json`);
-                        if(res.ok){
-                            const wdata=await res.json();
-                            const win=wdata?.MRData?.RaceTable?.Races?.[0]?.Results?.[0];
-                            if(win) winnerHtml=`<div class="winner">🏆 WINNER: ${win.Driver.givenName} ${win.Driver.familyName}</div>`;
+    const SEASON = 2026;
+    const BASE = `https://api.jolpi.ca/ergast/f1/${SEASON}`;
+    async function loadCalendar() {
+        const grid = document.getElementById('calendarGrid');
+        try {
+            const sched = await fetch(`${BASE}.json`);
+            const data = await sched.json();
+            const races = data?.MRData?.RaceTable?.Races || [];
+            grid.innerHTML = '';
+            const now = new Date();
+            for (let r of races) {
+                const raceDate = new Date(r.date);
+                const isPast = raceDate < now;
+                let winnerHtml = '';
+                if (isPast) {
+                    try {
+                        const res = await fetch(`${BASE}/${r.round}/results.json`);
+                        if (res.ok) {
+                            const wdata = await res.json();
+                            const win = wdata?.MRData?.RaceTable?.Races?.[0]?.Results?.[0];
+                            if (win) winnerHtml = `<div class="winner">🏆 WINNER: ${win.Driver.givenName} ${win.Driver.familyName}</div>`;
                         }
-                    }catch(e){}
+                    } catch(e) {}
                 }
-                const card=document.createElement('div');
-                card.className='race-card';
-                card.innerHTML=`
+                const card = document.createElement('div');
+                card.className = 'race-card';
+                card.innerHTML = `
                     <div class="race-header"><span>ROUND ${r.round}</span><span>${raceDate.toLocaleDateString('en-GB')}</span></div>
                     <div class="race-name">${r.raceName}</div>
-                    <div class="race-status">${isPast?'✓ FINISHED':'⏩ UPCOMING'}</div>
+                    <div>${isPast ? '✓ FINISHED' : '⏩ UPCOMING'}</div>
                     ${winnerHtml}
                 `;
                 grid.appendChild(card);
             }
-        }catch(e){grid.innerHTML='<div>ERROR LOADING CALENDAR</div>';}
+        } catch(e) { grid.innerHTML = '<div>ERROR LOADING CALENDAR</div>'; }
     }
     loadCalendar();
 </script>
