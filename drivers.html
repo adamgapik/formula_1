@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>F1 2026 — гонщики и очки</title>
+    <title>F1 2026 — гонщики (живые данные)</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: #0a0c12; color: #eef2ff; padding: 20px; }
@@ -19,7 +19,8 @@
         th, td { padding: 14px 12px; text-align: left; border-bottom: 1px solid #20232c; }
         th { background: #1a1d2a; }
         .red-bull-row { background: rgba(225, 6, 0, 0.08); border-left: 3px solid #e10600; }
-        .footer { margin-top: 48px; text-align: center; padding: 24px; border-top: 1px solid #20232c; }
+        .footer { margin-top: 48px; text-align: center; padding: 24px; border-top: 1px solid #20232c; color: #6a85a5; }
+        .loading { text-align: center; padding: 40px; color: #8a9bb0; }
     </style>
 </head>
 <body>
@@ -32,30 +33,70 @@
         <a href="baku.html">Гран-при Баку</a>
     </div>
 
-    <h2 style="margin-bottom: 20px;">🏁 ЧЕМПИОНАТ ГОНЩИКОВ 2026 (топ-15)</h2>
+    <h2 style="margin-bottom: 20px;">🏁 ЧЕМПИОНАТ ГОНЩИКОВ 2026 (обновляется с Ergast API)</h2>
     <div class="table-wrapper">
-        <table>
-            <thead><tr><th>Поз.</th><th>Гонщик</th><th>Команда</th><th>Победы</th><th>Очки</th></tr></thead>
-            <tbody>
-                <tr><td>1</td><td>Kimi Antonelli</td><td>Mercedes</td><td>2</td><td>72</td></tr>
-                <tr><td>2</td><td>George Russell</td><td>Mercedes</td><td>1</td><td>63</td></tr>
-                <tr><td>3</td><td>Charles Leclerc</td><td>Ferrari</td><td>0</td><td>49</td></tr>
-                <tr><td>4</td><td>Lewis Hamilton</td><td>Ferrari</td><td>0</td><td>41</td></tr>
-                <tr><td>5</td><td>Lando Norris</td><td>McLaren</td><td>0</td><td>25</td></tr>
-                <tr><td>6</td><td>Oscar Piastri</td><td>McLaren</td><td>0</td><td>21</td></tr>
-                <tr><td>7</td><td>Oliver Bearman</td><td>Haas</td><td>0</td><td>17</td></tr>
-                <tr><td>8</td><td>Pierre Gasly</td><td>Alpine</td><td>0</td><td>15</td></tr>
-                <tr class="red-bull-row"><td>9</td><td>Max Verstappen</td><td>Red Bull</td><td>0</td><td>12</td></tr>
-                <tr><td>10</td><td>Liam Lawson</td><td>Racing Bulls</td><td>0</td><td>10</td></tr>
-                <tr><td>11</td><td>Arvid Lindblad</td><td>Racing Bulls</td><td>0</td><td>4</td></tr>
-                <tr class="red-bull-row"><td>12</td><td>Isack Hadjar</td><td>Red Bull</td><td>0</td><td>4</td></tr>
-                <tr><td>13</td><td>Gabriel Bortoleto</td><td>Audi</td><td>0</td><td>2</td></tr>
-                <tr><td>14</td><td>Carlos Sainz</td><td>Williams</td><td>0</td><td>2</td></tr>
-                <tr><td>15</td><td>Esteban Ocon</td><td>Haas</td><td>0</td><td>1</td></tr>
+        <table id="drivers-table">
+            <thead>
+                <tr><th>Поз.</th><th>Гонщик</th><th>Команда</th><th>Победы</th><th>Очки</th></tr>
+            </thead>
+            <tbody id="drivers-tbody">
+                <tr><td colspan="5" class="loading">Загрузка данных из API...</td></tr>
             </tbody>
         </table>
     </div>
-    <div class="footer">Данные после Гран-при Японии 2026. Red Bull набирает форму.</div>
+    <div class="footer">Данные автоматически обновляются после каждой гонки через Ergast / Jolpica API. Актуально на 2026 год.</div>
 </div>
+
+<script>
+    // ========== ВОТ СЮДА ВСТАВЛЯЕТСЯ ВЕСЬ КОД ==========
+    // Код для загрузки данных о гонщиках из API
+    const SEASON = 2026;
+    const ERGAST_DRIVERS = `https://api.jolpi.ca/ergast/f1/${SEASON}/driverstandings.json`;
+
+    async function fetchDrivers() {
+        const tbody = document.getElementById('drivers-tbody');
+        if (!tbody) return;
+        
+        try {
+            const response = await fetch(ERGAST_DRIVERS);
+            if (!response.ok) throw new Error(`Ошибка HTTP: ${response.status}`);
+            const data = await response.json();
+            
+            const standingsList = data?.MRData?.StandingsTable?.StandingsLists?.[0]?.DriverStandings;
+            if (!standingsList || standingsList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5">Нет данных о гонщиках</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = '';
+            standingsList.forEach((driver, idx) => {
+                const row = tbody.insertRow();
+                const pos = idx + 1;
+                const givenName = driver.Driver.givenName || '';
+                const familyName = driver.Driver.familyName || '';
+                const fullName = `${givenName} ${familyName}`.trim();
+                const teamName = driver.Constructors?.[0]?.name || '—';
+                const wins = driver.wins || 0;
+                const points = driver.points || 0;
+                
+                row.insertCell(0).innerText = pos;
+                row.insertCell(1).innerText = fullName;
+                row.insertCell(2).innerText = teamName;
+                row.insertCell(3).innerText = wins;
+                row.insertCell(4).innerText = points;
+                
+                if (teamName === 'Red Bull') {
+                    row.classList.add('red-bull-row');
+                }
+            });
+        } catch (error) {
+            console.error('Ошибка загрузки данных гонщиков:', error);
+            tbody.innerHTML = '<tr><td colspan="5">Ошибка соединения с API. Попробуйте позже.</td></tr>';
+        }
+    }
+    
+    fetchDrivers();
+    // ========== КОНЕЦ КОДА ==========
+</script>
 </body>
 </html>
