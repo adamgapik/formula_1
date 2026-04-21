@@ -4,28 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>F1 2026 // NEWS</title>
-    <style>
-        *{margin:0;padding:0;box-sizing:border-box;}
-        body{background:#03050a;font-family:'Inter',monospace;color:#eef2ff;padding:24px;}
-        .container{max-width:1200px;margin:0 auto;}
-        .nav{
-            display:flex;flex-wrap:wrap;justify-content:center;gap:12px;
-            margin-bottom:48px;padding:8px 24px;border-bottom:1px solid #ff003c;
-            box-shadow:0 0 6px #ff003c;
-        }
-        .nav a{color:#b0c4de;text-decoration:none;font-weight:700;padding:8px 24px;}
-        .nav a.active,.nav a:hover{background:#ff003c;color:#000;box-shadow:0 0 12px #ff003c;}
-        h1{font-size:28px;font-weight:800;margin-bottom:28px;border-left:4px solid #00c8ff;padding-left:18px;text-shadow:0 0 5px #00c8ff;}
-        .news-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:24px;}
-        .news-card{background:#0b0e14;border:1px solid #ff003c;padding:16px;transition:0.1s;}
-        .news-card:hover{border-color:#00c8ff;box-shadow:0 0 12px #00c8ff;}
-        .news-title{font-weight:800;font-size:18px;margin-bottom:8px;}
-        .news-title a{color:#eef2ff;text-decoration:none;}
-        .news-title a:hover{color:#ff003c;}
-        .news-desc{font-size:13px;color:#9aaebf;margin-bottom:12px;}
-        .news-meta{font-size:10px;color:#ff003c;}
-        .footer{margin-top:64px;padding:24px;text-align:center;border-top:1px solid #ff003c;font-size:11px;}
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="container">
@@ -35,50 +14,49 @@
         <a href="teams.html">TEAMS</a>
         <a href="calendar.html">CALENDAR</a>
         <a href="news.html" class="active">NEWS</a>
+        <a href="games.html">GAMES</a>
     </div>
     <h1>📡 LATEST F1 NEWS</h1>
     <div class="news-grid" id="newsGrid"><div>⏳ FETCHING HEADLINES</div></div>
     <div class="footer">AGGREGATED VIA RSS · UPDATES HOURLY</div>
 </div>
 <script>
-    const RSS_FEEDS = ['https://www.motorsport.com/f1/news/rss/','https://www.autosport.com/rss/feed/f1'];
-    async function fetchNews(){
-        const grid=document.getElementById('newsGrid');
-        let articles=[];
-        for(let feed of RSS_FEEDS){
-            try{
-                const proxy=`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed)}`;
-                const res=await fetch(proxy);
-                if(res.ok){
-                    const data=await res.json();
-                    if(data.items){
-                        articles.push(...data.items.slice(0,5).map(i=>({
-                            title:i.title,
-                            link:i.link,
-                            pubDate:i.pubDate,
-                            description:i.description?.replace(/<[^>]*>/g,'').slice(0,180)+'...'||'',
-                            source:feed.includes('motorsport')?'Motorsport':'Autosport'
+    const RSS_FEEDS = ['https://www.motorsport.com/f1/news/rss/', 'https://www.autosport.com/rss/feed/f1'];
+    async function fetchNews() {
+        const grid = document.getElementById('newsGrid');
+        let articles = [];
+        for (let feed of RSS_FEEDS) {
+            try {
+                const proxy = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed)}`;
+                const res = await fetch(proxy);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.items) {
+                        articles.push(...data.items.slice(0, 5).map(i => ({
+                            title: i.title, link: i.link, pubDate: i.pubDate,
+                            description: i.description?.replace(/<[^>]*>/g, '').slice(0, 180) + '...' || '',
+                            source: feed.includes('motorsport') ? 'Motorsport' : 'Autosport'
                         })));
                     }
                 }
-            }catch(e){}
+            } catch(e) {}
         }
-        articles.sort((a,b)=>new Date(b.pubDate)-new Date(a.pubDate));
-        articles=articles.slice(0,18);
-        if(articles.length===0){grid.innerHTML='<div>NO NEWS AVAILABLE</div>';return;}
-        grid.innerHTML='';
-        articles.forEach(a=>{
-            const card=document.createElement('div');
-            card.className='news-card';
-            card.innerHTML=`
+        articles.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+        articles = articles.slice(0, 18);
+        if (articles.length === 0) { grid.innerHTML = '<div>NO NEWS AVAILABLE</div>'; return; }
+        grid.innerHTML = '';
+        articles.forEach(a => {
+            const card = document.createElement('div');
+            card.className = 'news-card';
+            card.innerHTML = `
                 <div class="news-title"><a href="${a.link}" target="_blank">${escapeHtml(a.title)}</a></div>
                 <div class="news-desc">${escapeHtml(a.description)}</div>
-                <div class="news-meta">${a.source} · ${new Date(a.pubDate).toLocaleDateString('en-GB')}</div>
+                <div>${a.source} · ${new Date(a.pubDate).toLocaleDateString('en-GB')}</div>
             `;
             grid.appendChild(card);
         });
     }
-    function escapeHtml(s){if(!s)return '';return s.replace(/[&<>]/g,function(m){if(m==='&')return '&amp;';if(m==='<')return '&lt;';if(m==='>')return '&gt;';return m;});}
+    function escapeHtml(s) { if (!s) return ''; return s.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
     fetchNews();
 </script>
 </body>
