@@ -1,50 +1,53 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>F1 2026 | Red Bull Territory</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 2026 — Championship Live</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: #030507; color: #fff; padding: 20px; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f7fc; color: #1a2c3e; padding: 24px; line-height: 1.4; }
         .container { max-width: 1400px; margin: 0 auto; }
         .nav {
-            background: #0b0e14; border-radius: 80px; padding: 12px 28px; display: flex; flex-wrap: wrap;
-            justify-content: center; gap: 20px; margin-bottom: 48px; border: 1px solid rgba(225, 6, 0, 0.4);
-            box-shadow: 0 0 10px rgba(225, 6, 0, 0.2);
+            background: white; border-radius: 48px; padding: 12px 28px;
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;
+            margin-bottom: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); border: 1px solid #e2e8f0;
         }
-        .nav a { color: #ccd6f0; text-decoration: none; font-weight: 700; padding: 8px 22px; border-radius: 40px; transition: 0.25s; }
-        .nav a.active, .nav a:hover { background: #e10600; color: white; box-shadow: 0 0 12px #e10600; }
+        .nav a {
+            color: #1a2c3e; text-decoration: none; font-weight: 600; font-size: 15px;
+            padding: 8px 22px; border-radius: 40px; transition: 0.2s;
+        }
+        .nav a.active, .nav a:hover { background: #e10600; color: white; }
+        h1 { font-size: 28px; font-weight: 700; margin-bottom: 24px; letter-spacing: -0.3px; border-left: 4px solid #e10600; padding-left: 18px; }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; margin-bottom: 48px; }
         .stat-card {
-            background: #0f121b; border-radius: 28px; padding: 24px; border: 1px solid #1f2538;
-            transition: 0.2s; backdrop-filter: blur(2px);
+            background: white; border-radius: 24px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0; transition: 0.2s;
         }
-        .stat-card:hover { transform: translateY(-4px); border-color: #e10600; box-shadow: 0 10px 20px -8px rgba(225,6,0,0.3); }
-        .stat-label { font-size: 12px; text-transform: uppercase; color: #e10600; letter-spacing: 1px; margin-bottom: 8px; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.05); }
+        .stat-label { font-size: 12px; text-transform: uppercase; color: #5a6e84; letter-spacing: 0.5px; margin-bottom: 8px; }
         .stat-value { font-size: 32px; font-weight: 800; margin-bottom: 6px; }
-        .next-race {
-            background: linear-gradient(145deg, #0f121b, #080a10); border-radius: 32px; padding: 28px;
-            margin-bottom: 32px; border-left: 6px solid #e10600; box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+        .next-race-card {
+            background: white; border-radius: 24px; padding: 28px; margin-bottom: 32px;
+            border: 1px solid #e2e8f0; border-left: 4px solid #e10600;
         }
-        .news-card { background: #0f121b; border-radius: 28px; padding: 24px; margin-bottom: 24px; border: 1px solid #1f2538; }
-        .footer { margin-top: 60px; text-align: center; padding: 24px; border-top: 1px solid #1a1f2c; font-size: 12px; color: #6c7a92; }
+        .footer { margin-top: 60px; text-align: center; padding: 24px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #5a6e84; }
         @media (max-width: 768px) { .stat-value { font-size: 24px; } .nav a { padding: 6px 14px; font-size: 13px; } }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="nav">
-        <a href="index.html" class="active">Главная</a>
-        <a href="drivers.html">Гонщики</a>
-        <a href="teams.html">Команды</a>
-        <a href="calendar.html">Календарь</a>
-        <a href="baku.html">Гран-при Баку</a>
+        <a href="index.html" class="active">Standings</a>
+        <a href="drivers.html">Drivers</a>
+        <a href="teams.html">Teams</a>
+        <a href="calendar.html">Calendar</a>
+        <a href="news.html">News</a>
     </div>
-    <div class="stats-grid" id="statsGrid"><div class="stat-card">📡 ЗАГРУЗКА ДАННЫХ...</div></div>
-    <div class="next-race" id="nextRaceBlock"><h2>🔴 СЛЕДУЮЩАЯ ГОНКА</h2><p>Загрузка...</p></div>
-    <div id="newsBlock"></div>
-    <div class="footer">F1 2026 — живые данные из Ergast API. Red Bull возвращается! 🐂🔥</div>
+    <h1>📊 2026 SEASON OVERVIEW</h1>
+    <div class="stats-grid" id="statsGrid"><div class="stat-card">Loading data...</div></div>
+    <div class="next-race-card" id="nextRaceBlock"><strong>Next Grand Prix</strong><br>Loading...</div>
+    <div class="footer">Data updates automatically via Jolpica API (Ergast replacement) · Live after each session</div>
 </div>
 <script>
     const SEASON = 2026;
@@ -69,14 +72,6 @@
             const topTeam = constrData.MRData.StandingsTable.StandingsLists[0].ConstructorStandings[0];
             if (topTeam) { leaderTeam = topTeam.Constructor.name; teamPoints = topTeam.points; }
         }
-        let rbPoints = 0;
-        if (driversData?.MRData?.StandingsTable?.StandingsLists?.[0]?.DriverStandings) {
-            const all = driversData.MRData.StandingsTable.StandingsLists[0].DriverStandings;
-            const max = all.find(d => d.Driver.familyName === 'Verstappen');
-            const hadjar = all.find(d => d.Driver.familyName === 'Hadjar');
-            if (max) rbPoints += parseInt(max.points);
-            if (hadjar) rbPoints += parseInt(hadjar.points);
-        }
         const schedule = await fetchJSON(`${ERGAST_BASE}/${SEASON}.json`);
         let nextRace = null;
         if (schedule?.MRData?.RaceTable?.Races) {
@@ -86,17 +81,17 @@
             if (!nextRace && races.length) nextRace = races[races.length - 1];
         }
         document.getElementById('statsGrid').innerHTML = `
-            <div class="stat-card"><div class="stat-label">🏆 ЛИДЕР ГОНЩИКОВ</div><div class="stat-value">${leaderDriver}</div><div>${leaderPoints} очков · ${leaderWins} побед</div></div>
-            <div class="stat-card"><div class="stat-label">🏭 ЛИДЕР КОНСТРУКТОРОВ</div><div class="stat-value">${leaderTeam}</div><div>${teamPoints} очков</div></div>
-            <div class="stat-card"><div class="stat-label">🐂 RED BULL (ОБА ПИЛОТА)</div><div class="stat-value">${rbPoints}</div><div>Верстаппен + Хаджар</div></div>
-            <div class="stat-card"><div class="stat-label">📅 БЛИЖАЙШИЙ ЭТАП</div><div class="stat-value">${nextRace ? nextRace.raceName : '—'}</div><div>${nextRace ? new Date(nextRace.date).toLocaleDateString('ru-RU') : ''}</div></div>
+            <div class="stat-card"><div class="stat-label">🏆 DRIVERS' LEADER</div><div class="stat-value">${leaderDriver}</div><div>${leaderPoints} points · ${leaderWins} wins</div></div>
+            <div class="stat-card"><div class="stat-label">🏭 CONSTRUCTORS' LEADER</div><div class="stat-value">${leaderTeam}</div><div>${teamPoints} points</div></div>
+            <div class="stat-card"><div class="stat-label">📅 TOTAL RACES</div><div class="stat-value">${schedule?.MRData?.RaceTable?.Races?.length || 24}</div><div>2026 season</div></div>
+            <div class="stat-card"><div class="stat-label">🏁 NEXT RACE</div><div class="stat-value">${nextRace ? nextRace.raceName : '—'}</div><div>${nextRace ? new Date(nextRace.date).toLocaleDateString('en-GB') : ''}</div></div>
         `;
         document.getElementById('nextRaceBlock').innerHTML = nextRace ? `
-            <h2>🔴 ${nextRace.raceName} — ${nextRace.Circuit.circuitName}</h2>
-            <p>${new Date(nextRace.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })} · ${nextRace.Circuit.Location?.country || ''}</p>
-            <p>⏳ ГОНКА СКОРО! ОБНОВЛЯЙТЕ СТРАНИЦУ.</p>
-        ` : '<h2>🔴 СЕЗОН ЗАВЕРШЁН</h2><p>Спасибо за яркий год!</p>';
-        document.getElementById('newsBlock').innerHTML = `<div class="news-card"><h3>🔥 RED BULL RACING — СТАВКА НА БАКУ</h3><p>После обновлений и традиционно сильной трассы в Баку, Макс и Исак нацелены на подиум. Следи за таблицами!</p><p>🐂 Твой выбор — Red Bull, ты едешь в Баку!</p></div>`;
+            <strong>🔴 ${nextRace.raceName}</strong><br>
+            📍 ${nextRace.Circuit.circuitName}, ${nextRace.Circuit.Location?.country || ''}<br>
+            📅 ${new Date(nextRace.date).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}<br>
+            ⏳ Full schedule available in <a href="calendar.html" style="color:#e10600;">Calendar</a>
+        ` : '<strong>🔴 SEASON FINISHED</strong><br>Thank you for following F1 2026';
     }
     loadDashboard();
 </script>
