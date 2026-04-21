@@ -1,45 +1,44 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>F1 2026 — команды</title>
+    <title>F1 2026 — Constructors Championship</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: #030507; color: #fff; padding: 20px; }
-        .container { max-width: 1400px; margin: 0 auto; }
+        body { font-family: 'Inter', sans-serif; background: #f4f7fc; color: #1a2c3e; padding: 24px; }
+        .container { max-width: 1300px; margin: 0 auto; }
         .nav {
-            background: #0b0e14; border-radius: 80px; padding: 12px 28px; display: flex; flex-wrap: wrap;
-            justify-content: center; gap: 20px; margin-bottom: 48px; border: 1px solid rgba(225, 6, 0, 0.4);
-            box-shadow: 0 0 10px rgba(225, 6, 0, 0.2);
+            background: white; border-radius: 48px; padding: 12px 28px; display: flex; flex-wrap: wrap;
+            justify-content: center; gap: 20px; margin-bottom: 40px; border: 1px solid #e2e8f0;
         }
-        .nav a { color: #ccd6f0; text-decoration: none; font-weight: 700; padding: 8px 22px; border-radius: 40px; transition: 0.25s; }
-        .nav a.active, .nav a:hover { background: #e10600; color: white; box-shadow: 0 0 12px #e10600; }
-        .table-wrapper { overflow-x: auto; background: #0f121b; border-radius: 28px; padding: 4px; border: 1px solid #1f2538; }
+        .nav a { color: #1a2c3e; text-decoration: none; font-weight: 600; padding: 8px 22px; border-radius: 40px; transition: 0.2s; }
+        .nav a.active, .nav a:hover { background: #e10600; color: white; }
+        h1 { font-size: 28px; font-weight: 700; margin-bottom: 24px; border-left: 4px solid #e10600; padding-left: 18px; }
+        .table-wrapper { overflow-x: auto; background: white; border-radius: 24px; border: 1px solid #e2e8f0; }
         table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 16px 12px; text-align: left; border-bottom: 1px solid #1f2538; }
-        th { background: #0a0d14; color: #e10600; font-weight: 700; }
-        .red-bull-row { background: rgba(225, 6, 0, 0.08); border-left: 3px solid #e10600; }
-        .footer { margin-top: 60px; text-align: center; padding: 24px; border-top: 1px solid #1a1f2c; color: #6c7a92; }
+        th, td { padding: 16px 14px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background: #f8fafc; font-weight: 600; color: #1e3c5c; }
+        .footer { margin-top: 48px; text-align: center; padding: 24px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #5a6e84; }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="nav">
-        <a href="index.html">Главная</a>
-        <a href="drivers.html">Гонщики</a>
-        <a href="teams.html" class="active">Команды</a>
-        <a href="calendar.html">Календарь</a>
-        <a href="baku.html">Гран-при Баку</a>
+        <a href="index.html">Standings</a>
+        <a href="drivers.html">Drivers</a>
+        <a href="teams.html" class="active">Teams</a>
+        <a href="calendar.html">Calendar</a>
+        <a href="news.html">News</a>
     </div>
-    <h2 style="margin-bottom: 20px;">🏢 КУБОК КОНСТРУКТОРОВ 2026</h2>
+    <h1>🏢 CONSTRUCTORS' CHAMPIONSHIP 2026</h1>
     <div class="table-wrapper">
         <table id="teams-table">
-            <thead><tr><th>Поз.</th><th>Команда</th><th>Победы</th><th>Очки</th></tr></thead>
-            <tbody id="teams-tbody"><tr><td colspan="4">Загрузка...</td></tr></tbody>
+            <thead><tr><th>Pos</th><th>Constructor</th><th>Wins</th><th>Points</th></tr></thead>
+            <tbody id="teams-tbody"><tr><td colspan="4">Loading data...</td></tr></tbody>
         </table>
     </div>
-    <div class="footer">Автообновление после каждого Гран-при.</div>
+    <div class="footer">Data via Jolpica API · Automatic updates</div>
 </div>
 <script>
     const SEASON = 2026;
@@ -56,9 +55,8 @@
                 row.insertCell(1).innerText = t.Constructor.name;
                 row.insertCell(2).innerText = t.wins;
                 row.insertCell(3).innerText = t.points;
-                if (t.Constructor.name === 'Red Bull' || t.Constructor.name === 'Red Bull Racing') row.classList.add('red-bull-row');
             });
-        } catch(e) { tbody.innerHTML = '<tr><td colspan="4">Ошибка API</td></tr>'; }
+        } catch(e) { tbody.innerHTML = '<tr><td colspan="4">Error loading data</td></tr>'; }
     }
     fetchTeams();
 </script>
