@@ -3,25 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>F1 PRECISION RACING · COLLISION = GAME OVER</title>
+    <title>F1 2026 // MINI GAMES</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        * { user-select: none; -webkit-tap-highlight-color: transparent; }
-        .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 24px; }
-        .game-card { background: #0b0e14; border: 1px solid #ff003c; padding: 20px; transition: 0.2s; }
-        .game-card:hover { border-color: #00c8ff; box-shadow: 0 0 12px #00c8ff; }
-        .game-title { font-size: 20px; font-weight: 800; margin-bottom: 12px; color: #ff003c; }
-        button { background: #ff003c; border: none; color: #000; font-weight: 700; padding: 8px 16px; margin: 12px 6px 0 0; cursor: pointer; font-family: monospace; transition: 0.1s; }
-        button:hover { background: #00c8ff; box-shadow: 0 0 8px #00c8ff; }
-        select, input { background: #0b0e14; border: 1px solid #ff003c; color: #eef2ff; padding: 8px; width: 100%; margin-top: 10px; }
-        .game-stats { margin-top: 12px; font-size: 13px; color: #b0c4de; }
-        .race-canvas-container { background: #000; border-radius: 12px; padding: 8px; margin: 12px 0; border: 1px solid #ff003c; }
-        canvas { display: block; margin: 0 auto; background: #0a0f1a; border-radius: 8px; width: 100%; height: auto; cursor: none; }
-        .race-controls { display: flex; gap: 12px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
-        .race-controls button { margin-top: 0; padding: 10px 20px; font-size: 16px; min-width: 70px; }
-        .sim-panel { background: #0b0e14; border: 1px solid #ff003c; padding: 12px; margin: 12px 0; border-radius: 8px; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; }
-        @media (max-width: 700px) { .race-controls button { padding: 6px 12px; font-size: 12px; min-width: 60px; } }
-    </style>
 </head>
 <body>
 <div class="container">
@@ -31,16 +14,15 @@
         <a href="teams.html">TEAMS</a>
         <a href="calendar.html">CALENDAR</a>
         <a href="news.html">NEWS</a>
-        <a href="games.html" class="active">SIMULATOR</a>
+        <a href="games.html" class="active">GAMES</a>
+        <a href="simulator.html">SIMULATOR</a>
     </div>
-    <h1>🏁 PRECISION RACING · COLLISION = GAME OVER</h1>
+    <h1>🎮 F1 MINI GAMES · 14 GAMES</h1>
     <div class="games-grid" id="gamesGrid"></div>
-    <div class="footer">⬆️⬇️⬅️➡️ MOVE · TOUCH TRACK EDGE → GAME OVER · FINISH ONLY WHEN YOU CROSS LINE</div>
+    <div class="footer">⚡ REACTION · MEMORY · TAPPING · QUIZ · ARCADE</div>
 </div>
-
 <script>
     const gamesGrid = document.getElementById('gamesGrid');
-
     function createGameCard(title, contentFn, id) {
         const card = document.createElement('div');
         card.className = 'game-card';
@@ -49,379 +31,100 @@
         const container = document.getElementById(id);
         if (container) contentFn(container);
     }
-
-    createGameCard('🏎️ PRECISION RACING', (cont) => {
-        cont.innerHTML = `
-            <div style="display:flex; gap:12px; flex-wrap:wrap; justify-content:space-between;">
-                <select id="racingDriver" style="width:48%;">
-                    <option value="Max Verstappen">Max Verstappen (Red Bull)</option>
-                    <option value="Lewis Hamilton">Lewis Hamilton (Ferrari)</option>
-                    <option value="Lando Norris">Lando Norris (McLaren)</option>
-                    <option value="Charles Leclerc">Charles Leclerc (Ferrari)</option>
-                    <option value="George Russell">George Russell (Mercedes)</option>
-                </select>
-                <select id="trackSelect" style="width:48%;">
-                    <option value="monaco">🇲🇨 MONACO (narrow)</option>
-                    <option value="monza">🇮🇹 MONZA (fast)</option>
-                    <option value="silverstone">🇬🇧 SILVERSTONE</option>
-                </select>
-            </div>
-            <div class="sim-panel">
-                <label>🌧️ WEATHER: <select id="weatherSelect"><option value="sunny">☀️ SUNNY</option><option value="rain">🌧️ RAIN</option><option value="night">🌙 NIGHT</option></select></label>
-            </div>
-            <div class="race-canvas-container">
-                <canvas id="raceCanvas" width="900" height="700" style="width:100%; height:auto; max-width:900px; aspect-ratio:900/700"></canvas>
-            </div>
-            <div class="race-controls">
-                <button id="upBtn">⬆️ UP</button>
-                <button id="downBtn">⬇️ DOWN</button>
-                <button id="leftBtn">⬅️ LEFT</button>
-                <button id="rightBtn">➡️ RIGHT</button>
-            </div>
-            <div id="raceInfo" style="font-family:monospace; margin-top:12px; display:flex; justify-content:space-between; flex-wrap:wrap;">
-                <span>🏁 LAPS: <span id="lapCount">0</span>/3</span>
-                <span>💥 STATUS: <span id="statusText">ALIVE</span></span>
-            </div>
-            <button id="startRaceBtn">🏁 START RACE 🏁</button>
-            <div id="raceMessage" class="game-stats"></div>
-        `;
-
-        const canvas = document.getElementById('raceCanvas');
-        const ctx = canvas.getContext('2d');
-        let animFrame = null;
-        let raceActive = false;
-        let gameOver = false;
-        
-        let trackPoints = [];
-        let trackWidth = 28;
-        
-        let player = { x: 0, y: 0, lap: 0 };
-        let finishCrossed = false;
-        
-        let moveUp = false, moveDown = false, moveLeft = false, moveRight = false;
-        const STEP = 5;
-        
-        function buildTrack() {
-            const trackType = document.getElementById('trackSelect').value;
-            trackPoints = [];
-            let cx = canvas.width/2, cy = canvas.height/2;
-            if(trackType === 'monaco') {
-                for(let i=0;i<=120;i++) {
-                    let t = i/120;
-                    let a = t * Math.PI * 2;
-                    let r = 180 + Math.sin(a*6)*35;
-                    trackPoints.push({x: cx + Math.cos(a)*r, y: cy + Math.sin(a)*r});
-                }
-            } else if(trackType === 'monza') {
-                for(let i=0;i<=100;i++) {
-                    let t = i/100;
-                    let a = t * Math.PI * 2;
-                    let r = 240 + Math.sin(a*2.5)*45;
-                    trackPoints.push({x: cx + Math.cos(a)*r, y: cy + Math.sin(a)*r});
-                }
-            } else {
-                for(let i=0;i<=110;i++) {
-                    let t = i/110;
-                    let a = t * Math.PI * 2;
-                    let r = 210 + Math.sin(a*4)*40;
-                    trackPoints.push({x: cx + Math.cos(a)*r, y: cy + Math.sin(a)*r});
-                }
-            }
-            trackPoints.push(trackPoints[0]);
-        }
-        
-        function isOnTrack(px, py) {
-            for(let i=0;i<trackPoints.length-1;i++) {
-                let x1=trackPoints[i].x, y1=trackPoints[i].y;
-                let x2=trackPoints[i+1].x, y2=trackPoints[i+1].y;
-                let len = Math.hypot(x2-x1, y2-y1);
-                if(len===0) continue;
-                let t = ((px-x1)*(x2-x1) + (py-y1)*(y2-y1)) / (len*len);
-                t = Math.max(0, Math.min(1, t));
-                let projX = x1 + t*(x2-x1);
-                let projY = y1 + t*(y2-y1);
-                if(Math.hypot(px-projX, py-projY) < trackWidth) return true;
-            }
-            return false;
-        }
-        
-        function checkFinish() {
-            let s = trackPoints[0], e = trackPoints[1];
-            let dx = e.x - s.x, dy = e.y - s.y;
-            let len = Math.hypot(dx, dy);
-            if(len===0) return false;
-            let t = ((player.x - s.x)*dx + (player.y - s.y)*dy) / (len*len);
-            if(t<0 || t>1) return false;
-            let projX = s.x + t*dx, projY = s.y + t*dy;
-            return Math.hypot(player.x - projX, player.y - projY) < trackWidth;
-        }
-        
-        function drawTrack() {
-            ctx.beginPath();
-            ctx.moveTo(trackPoints[0].x, trackPoints[0].y);
-            for(let i=1;i<trackPoints.length;i++) ctx.lineTo(trackPoints[i].x, trackPoints[i].y);
-            ctx.closePath();
-            ctx.strokeStyle = '#ff003c';
-            ctx.lineWidth = trackWidth*2;
-            ctx.stroke();
-            ctx.fillStyle = '#2a2f3a';
-            ctx.fill();
-            ctx.beginPath();
-            ctx.moveTo(trackPoints[0].x, trackPoints[0].y);
-            for(let i=1;i<trackPoints.length;i++) ctx.lineTo(trackPoints[i].x, trackPoints[i].y);
-            ctx.closePath();
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            let s=trackPoints[0], e=trackPoints[1];
-            let ang = Math.atan2(e.y-s.y, e.x-s.x);
-            let px = -Math.sin(ang), py = Math.cos(ang);
-            ctx.beginPath();
-            ctx.moveTo(s.x+px*trackWidth, s.y+py*trackWidth);
-            ctx.lineTo(s.x-px*trackWidth, s.y-py*trackWidth);
-            ctx.lineTo(e.x-px*trackWidth, e.y-py*trackWidth);
-            ctx.lineTo(e.x+px*trackWidth, e.y+py*trackWidth);
-            ctx.fillStyle = '#fff';
-            ctx.fill();
-            ctx.fillStyle = '#ff003c';
-            ctx.font = 'bold 12px monospace';
-            ctx.fillText('S/F', s.x-15, s.y-10);
-        }
-        
-        function drawCar(x,y,color) {
-            ctx.fillStyle = color;
-            ctx.fillRect(x-8, y-6, 16, 12);
-            ctx.fillStyle = '#111';
-            ctx.fillRect(x-10, y-3, 4, 6);
-            ctx.fillRect(x+6, y-3, 4, 6);
-            ctx.fillStyle = '#888';
-            ctx.fillRect(x-3, y-9, 6, 4);
-        }
-        
-        function getDriverColor(name) {
-            if(name.includes('Verstappen')||name.includes('Hamilton')||name.includes('Leclerc')) return '#e10600';
-            if(name.includes('Norris')) return '#ff8700';
-            if(name.includes('Russell')) return '#00d4ff';
-            return '#ccc';
-        }
-        
-        function applyWeather() {
-            let w = document.getElementById('weatherSelect').value;
-            if(w === 'rain') {
-                ctx.fillStyle = 'rgba(100,150,200,0.25)';
-                ctx.fillRect(0,0,canvas.width,canvas.height);
-                for(let i=0;i<150;i++) { ctx.fillStyle = '#aaf'; ctx.fillRect(10+Math.random()*canvas.width, Math.random()*canvas.height, 2, 6); }
-            } else if(w === 'night') {
-                ctx.fillStyle = 'rgba(0,0,50,0.5)';
-                ctx.fillRect(0,0,canvas.width,canvas.height);
-                for(let i=0;i<80;i++) { ctx.fillStyle = '#ffa'; ctx.beginPath(); ctx.arc(20+Math.random()*canvas.width, 20+Math.random()*canvas.height, 2,0,Math.PI*2); ctx.fill(); }
-            }
-        }
-        
-        function gameLoop() {
-            if(!raceActive || gameOver) return;
-            
-            let nx = player.x, ny = player.y;
-            if(moveUp) ny -= STEP;
-            if(moveDown) ny += STEP;
-            if(moveLeft) nx -= STEP;
-            if(moveRight) nx += STEP;
-            
-            if(isOnTrack(nx, ny)) {
-                player.x = nx;
-                player.y = ny;
-            } else {
-                gameOver = true;
-                raceActive = false;
-                document.getElementById('statusText').innerText = 'CRASHED';
-                document.getElementById('raceMessage').innerHTML = '💥 GAME OVER! YOU LEFT THE TRACK 💥';
-                if(animFrame) cancelAnimationFrame(animFrame);
-                return;
-            }
-            
-            if(checkFinish()) {
-                if(!finishCrossed) {
-                    finishCrossed = true;
-                    player.lap++;
-                    document.getElementById('lapCount').innerText = player.lap;
-                    if(player.lap >= 3) {
-                        raceActive = false;
-                        document.getElementById('statusText').innerText = 'FINISHED';
-                        document.getElementById('raceMessage').innerHTML = '🏆 RACE COMPLETED! YOU WIN! 🏆';
-                        if(animFrame) cancelAnimationFrame(animFrame);
-                        return;
-                    }
-                    setTimeout(() => { finishCrossed = false; }, 200);
-                }
-            } else {
-                finishCrossed = false;
-            }
-            
-            ctx.clearRect(0,0,canvas.width,canvas.height);
-            ctx.fillStyle = '#0a0f1a';
-            ctx.fillRect(0,0,canvas.width,canvas.height);
-            drawTrack();
-            drawCar(player.x, player.y, getDriverColor(document.getElementById('racingDriver').value));
-            applyWeather();
-            
-            animFrame = requestAnimationFrame(gameLoop);
-        }
-        
-        function initRace() {
-            buildTrack();
-            let s = trackPoints[0], e = trackPoints[1];
-            let ang = Math.atan2(e.y-s.y, e.x-s.x);
-            let px = -Math.sin(ang), py = Math.cos(ang);
-            player.x = s.x + px*5;
-            player.y = s.y + py*5;
-            player.lap = 0;
-            finishCrossed = false;
-            gameOver = false;
-            moveUp=false; moveDown=false; moveLeft=false; moveRight=false;
-            document.getElementById('lapCount').innerText = '0';
-            document.getElementById('statusText').innerText = 'ALIVE';
-            document.getElementById('raceMessage').innerHTML = '🏁 USE BUTTONS TO MOVE · STAY ON TRACK 🏁';
-            ctx.clearRect(0,0,canvas.width,canvas.height);
-            ctx.fillStyle = '#0a0f1a';
-            ctx.fillRect(0,0,canvas.width,canvas.height);
-            drawTrack();
-            drawCar(player.x, player.y, getDriverColor(document.getElementById('racingDriver').value));
-            applyWeather();
-        }
-        
-        const upBtn = document.getElementById('upBtn'), downBtn = document.getElementById('downBtn');
-        const leftBtn = document.getElementById('leftBtn'), rightBtn = document.getElementById('rightBtn');
-        upBtn.onmousedown = () => moveUp=true; upBtn.onmouseup = () => moveUp=false;
-        upBtn.ontouchstart = e=>{e.preventDefault(); moveUp=true;}; upBtn.ontouchend = ()=>moveUp=false;
-        downBtn.onmousedown = () => moveDown=true; downBtn.onmouseup = () => moveDown=false;
-        downBtn.ontouchstart = e=>{e.preventDefault(); moveDown=true;}; downBtn.ontouchend = ()=>moveDown=false;
-        leftBtn.onmousedown = () => moveLeft=true; leftBtn.onmouseup = () => moveLeft=false;
-        leftBtn.ontouchstart = e=>{e.preventDefault(); moveLeft=true;}; leftBtn.ontouchend = ()=>moveLeft=false;
-        rightBtn.onmousedown = () => moveRight=true; rightBtn.onmouseup = () => moveRight=false;
-        rightBtn.ontouchstart = e=>{e.preventDefault(); moveRight=true;}; rightBtn.ontouchend = ()=>moveRight=false;
-        
-        document.getElementById('startRaceBtn').onclick = () => {
-            if(animFrame) cancelAnimationFrame(animFrame);
-            initRace();
-            raceActive = true;
-            gameOver = false;
-            gameLoop();
-        };
-        
-        canvas.width = 900; canvas.height = 700;
-        initRace();
-    }, 'gameRacing');
-
-    const miniGames = [
+    // 14 игр (сокращённо, но полностью рабочие)
+    const gamesList = [
         { title: '⏱️ REACTION PIT STOP', fn: (c) => { c.innerHTML = `<div>Click when light turns GREEN</div><div id="pitStatus" style="margin:12px 0;font-size:20px;font-weight:800;">🔴 WAITING</div><button id="pitBtn">START</button><div id="pitResult" class="game-stats"></div>`;
-            let pitTimer=null, pitStart=null, pitActive=false;
-            const pitBtn=document.getElementById('pitBtn'), pitStatus=document.getElementById('pitStatus'), pitResult=document.getElementById('pitResult');
-            pitBtn.onclick=()=>{ if(pitTimer) clearTimeout(pitTimer); pitActive=true; pitStart=null; pitStatus.innerHTML='🟢 GET READY...'; pitResult.innerHTML=''; const delay=Math.random()*3000+1000; pitTimer=setTimeout(()=>{ if(pitActive){ pitStatus.innerHTML='🟢🟢 GO! CLICK NOW 🟢🟢'; pitStart=Date.now(); } },delay); setTimeout(()=>{ if(pitActive && !pitStart){ pitStatus.innerHTML='🔴 MISSED START'; pitActive=false; } },delay+2000); };
-            document.addEventListener('click',(e)=>{ if(pitActive && pitStart && e.target!==pitBtn){ const react=Date.now()-pitStart; pitStatus.innerHTML=`✅ REACTION: ${react} ms`; pitResult.innerHTML=react<200?'🏆 WORLD CLASS':'🔄 GOOD'; pitActive=false; pitStart=null; if(pitTimer) clearTimeout(pitTimer); } });
+            let pt=null, ps=null, pa=false; const pb=document.getElementById('pitBtn'), pst=document.getElementById('pitStatus'), pr=document.getElementById('pitResult');
+            pb.onclick=()=>{ if(pt) clearTimeout(pt); pa=true; ps=null; pst.innerHTML='🟢 GET READY...'; pr.innerHTML=''; const d=Math.random()*3000+1000; pt=setTimeout(()=>{ if(pa){ pst.innerHTML='🟢🟢 GO! CLICK NOW 🟢🟢'; ps=Date.now(); } },d); setTimeout(()=>{ if(pa && !ps){ pst.innerHTML='🔴 MISSED START'; pa=false; } },d+2000); };
+            document.addEventListener('click',(e)=>{ if(pa && ps && e.target!==pb){ const r=Date.now()-ps; pst.innerHTML=`✅ REACTION: ${r} ms`; pr.innerHTML=r<200?'🏆 WORLD CLASS':'🔄 GOOD'; pa=false; ps=null; if(pt) clearTimeout(pt); } });
         } },
         { title: '🏁 LAP COUNTER', fn: (c) => { c.innerHTML = `<div>Click as fast as possible (10 sec)</div><div id="lapCounter" class="big-number">0</div><button id="lapBtn">START LAPS</button><div id="lapResult" class="game-stats"></div>`;
-            let lapActive=false, lapCount=0, lapInterval=null;
-            const lapBtn=document.getElementById('lapBtn'), lapCounter=document.getElementById('lapCounter'), lapResult=document.getElementById('lapResult');
-            lapBtn.onclick=()=>{ if(lapInterval) clearInterval(lapInterval); lapCount=0; lapCounter.innerText='0'; lapResult.innerHTML=''; lapActive=true; let timeLeft=10; lapResult.innerHTML=`⏱️ ${timeLeft} sec left`; lapInterval=setInterval(()=>{ timeLeft--; lapResult.innerHTML=`⏱️ ${timeLeft} sec left`; if(timeLeft<=0){ clearInterval(lapInterval); lapActive=false; lapResult.innerHTML=`✅ FINISHED: ${lapCount} laps`; } },1000); };
-            document.addEventListener('click',(e)=>{ if(lapActive && e.target!==lapBtn) { lapCount++; lapCounter.innerText=lapCount; } });
+            let la=false, lc=0, li=null; const lb=document.getElementById('lapBtn'), lct=document.getElementById('lapCounter'), lr=document.getElementById('lapResult');
+            lb.onclick=()=>{ if(li) clearInterval(li); lc=0; lct.innerText='0'; lr.innerHTML=''; la=true; let tl=10; lr.innerHTML=`⏱️ ${tl} sec left`; li=setInterval(()=>{ tl--; lr.innerHTML=`⏱️ ${tl} sec left`; if(tl<=0){ clearInterval(li); la=false; lr.innerHTML=`✅ FINISHED: ${lc} laps`; } },1000); };
+            document.addEventListener('click',(e)=>{ if(la && e.target!==lb) { lc++; lct.innerText=lc; } });
         } },
         { title: '🧠 DRIVER MEMORY', fn: (c) => { c.innerHTML = `<div id="memoryQuestion">Press START</div><input id="memoryInput" placeholder="Team name"><button id="memoryBtn">START</button><button id="checkMemoryBtn">CHECK</button><div id="memoryResult" class="game-stats"></div>`;
-            const drivers={'max verstappen':'red bull','lewis hamilton':'ferrari','lando norris':'mclaren','charles leclerc':'ferrari','george russell':'mercedes'};
-            let current='';
-            const mQ=document.getElementById('memoryQuestion'), mI=document.getElementById('memoryInput'), mR=document.getElementById('memoryResult');
-            document.getElementById('memoryBtn').onclick=()=>{ const keys=Object.keys(drivers); current=keys[Math.floor(Math.random()*keys.length)]; mQ.innerHTML=`🏎️ DRIVER: ${current.toUpperCase()}`; mI.value=''; mR.innerHTML=''; };
-            document.getElementById('checkMemoryBtn').onclick=()=>{ if(!current){ mR.innerHTML='❌ START FIRST'; return; } const ans=mI.value.trim().toLowerCase(); const correct=drivers[current]; mR.innerHTML=(ans===correct)?'✅ CORRECT':`❌ WRONG → ${correct.toUpperCase()}`; };
+            const dr={'max verstappen':'red bull','lewis hamilton':'ferrari','lando norris':'mclaren','charles leclerc':'ferrari','george russell':'mercedes'}; let cur='';
+            const mq=document.getElementById('memoryQuestion'), mi=document.getElementById('memoryInput'), mr=document.getElementById('memoryResult');
+            document.getElementById('memoryBtn').onclick=()=>{ const ks=Object.keys(dr); cur=ks[Math.floor(Math.random()*ks.length)]; mq.innerHTML=`🏎️ DRIVER: ${cur.toUpperCase()}`; mi.value=''; mr.innerHTML=''; };
+            document.getElementById('checkMemoryBtn').onclick=()=>{ if(!cur){ mr.innerHTML='❌ START FIRST'; return; } const ans=mi.value.trim().toLowerCase(); mr.innerHTML=(ans===dr[cur])?'✅ CORRECT':`❌ WRONG → ${dr[cur].toUpperCase()}`; };
         } },
         { title: '🏎️ TRACK TIME TRIAL', fn: (c) => { c.innerHTML = `<div>Press S1 → S2 → S3 fast</div><div class="flex-buttons"><button id="s1" disabled>S1</button><button id="s2" disabled>S2</button><button id="s3" disabled>S3</button></div><button id="startTrackBtn">START LAP</button><div id="trackResult" class="game-stats"></div>`;
-            let step=0, start=null, active=false;
-            const s1=document.getElementById('s1'), s2=document.getElementById('s2'), s3=document.getElementById('s3'), tR=document.getElementById('trackResult');
+            let st=0, start=null, act=false; const s1=document.getElementById('s1'), s2=document.getElementById('s2'), s3=document.getElementById('s3'), tr=document.getElementById('trackResult');
             const reset=()=>{ s1.disabled=s2.disabled=s3.disabled=true; s1.style.opacity=s2.style.opacity=s3.style.opacity='0.5'; };
-            document.getElementById('startTrackBtn').onclick=()=>{ step=1; active=true; start=Date.now(); s1.disabled=false; s2.disabled=true; s3.disabled=true; s1.style.opacity='1'; s2.style.opacity='0.5'; s3.style.opacity='0.5'; tR.innerHTML='⚡ PRESS S1 → S2 → S3'; };
-            s1.onclick=()=>{ if(active && step===1){ step=2; s1.disabled=true; s2.disabled=false; s1.style.opacity='0.5'; s2.style.opacity='1'; } };
-            s2.onclick=()=>{ if(active && step===2){ step=3; s2.disabled=true; s3.disabled=false; s2.style.opacity='0.5'; s3.style.opacity='1'; } };
-            s3.onclick=()=>{ if(active && step===3){ const time=Date.now()-start; tR.innerHTML=`🏁 ${time} ms ${time<1800?'🔥 RECORD':''}`; active=false; reset(); } };
+            document.getElementById('startTrackBtn').onclick=()=>{ st=1; act=true; start=Date.now(); s1.disabled=false; s2.disabled=true; s3.disabled=true; s1.style.opacity='1'; s2.style.opacity='0.5'; s3.style.opacity='0.5'; tr.innerHTML='⚡ PRESS S1 → S2 → S3'; };
+            s1.onclick=()=>{ if(act && st===1){ st=2; s1.disabled=true; s2.disabled=false; s1.style.opacity='0.5'; s2.style.opacity='1'; } };
+            s2.onclick=()=>{ if(act && st===2){ st=3; s2.disabled=true; s3.disabled=false; s2.style.opacity='0.5'; s3.style.opacity='1'; } };
+            s3.onclick=()=>{ if(act && st===3){ const t=Date.now()-start; tr.innerHTML=`🏁 ${t} ms ${t<1800?'🔥 RECORD':''}`; act=false; reset(); } };
             reset();
         } },
         { title: '🏁 GUESS THE FLAG', fn: (c) => { c.innerHTML = `<div id="flagQuestion">Press START</div><input id="flagInput" placeholder="Country name"><button id="flagStartBtn">START</button><button id="flagCheckBtn">CHECK</button><div id="flagResult" class="game-stats"></div>`;
-            const tracks={'silverstone':'uk','monza':'italy','monaco':'monaco','spa':'belgium','baku':'azerbaijan'};
-            let current='';
-            const fQ=document.getElementById('flagQuestion'), fI=document.getElementById('flagInput'), fR=document.getElementById('flagResult');
-            document.getElementById('flagStartBtn').onclick=()=>{ const keys=Object.keys(tracks); current=keys[Math.floor(Math.random()*keys.length)]; fQ.innerHTML=`📍 ${current.toUpperCase()}`; fI.value=''; fR.innerHTML=''; };
-            document.getElementById('flagCheckBtn').onclick=()=>{ if(!current){ fR.innerHTML='❌ START'; return; } const ans=fI.value.trim().toLowerCase(); fR.innerHTML=(ans===tracks[current])?'✅ CORRECT':`❌ WRONG → ${tracks[current].toUpperCase()}`; };
+            const trs={'silverstone':'uk','monza':'italy','monaco':'monaco','spa':'belgium','baku':'azerbaijan'}; let cur='';
+            const fq=document.getElementById('flagQuestion'), fi=document.getElementById('flagInput'), fr=document.getElementById('flagResult');
+            document.getElementById('flagStartBtn').onclick=()=>{ const ks=Object.keys(trs); cur=ks[Math.floor(Math.random()*ks.length)]; fq.innerHTML=`📍 ${cur.toUpperCase()}`; fi.value=''; fr.innerHTML=''; };
+            document.getElementById('flagCheckBtn').onclick=()=>{ if(!cur){ fr.innerHTML='❌ START'; return; } const ans=fi.value.trim().toLowerCase(); fr.innerHTML=(ans===trs[cur])?'✅ CORRECT':`❌ WRONG → ${trs[cur].toUpperCase()}`; };
         } },
         { title: '⚡ SPRINT TAP', fn: (c) => { c.innerHTML = `<div>Tap any key / click – 10 sec</div><div id="sprintCounter" class="big-number">0</div><button id="sprintStartBtn">START SPRINT</button><div id="sprintResult" class="game-stats"></div>`;
-            let active=false, count=0, interval=null;
-            const sC=document.getElementById('sprintCounter'), sR=document.getElementById('sprintResult'), sS=document.getElementById('sprintStartBtn');
-            const handler=()=>{ if(active){ count++; sC.innerText=count; } };
-            sS.onclick=()=>{ if(interval) clearInterval(interval); count=0; sC.innerText='0'; active=true; let time=10; sR.innerHTML=`⚡ ${time} sec left`; interval=setInterval(()=>{ time--; sR.innerHTML=`⚡ ${time} sec left`; if(time<=0){ clearInterval(interval); active=false; sR.innerHTML=`✅ FINISHED: ${count} taps`; } },1000); };
-            document.addEventListener('click',handler); document.addEventListener('keydown',handler);
+            let act=false, cnt=0, inv=null; const sc=document.getElementById('sprintCounter'), sr=document.getElementById('sprintResult'), ss=document.getElementById('sprintStartBtn');
+            const h=()=>{ if(act){ cnt++; sc.innerText=cnt; } };
+            ss.onclick=()=>{ if(inv) clearInterval(inv); cnt=0; sc.innerText='0'; act=true; let tl=10; sr.innerHTML=`⚡ ${tl} sec left`; inv=setInterval(()=>{ tl--; sr.innerHTML=`⚡ ${tl} sec left`; if(tl<=0){ clearInterval(inv); act=false; sr.innerHTML=`✅ FINISHED: ${cnt} taps`; } },1000); };
+            document.addEventListener('click',h); document.addEventListener('keydown',h);
         } },
         { title: '🔧 MECHANIC ERROR', fn: (c) => { c.innerHTML = `<div id="mechStatus" style="font-size:22px;">⚫ READY</div><button id="mechStartBtn">START</button><div id="mechResult" class="game-stats"></div>`;
-            let active=false, timer=null;
-            const mS=document.getElementById('mechStatus'), mR=document.getElementById('mechResult'), mSB=document.getElementById('mechStartBtn');
-            function show(){ if(!active) return; const isRed=Math.random()<0.5; mS.innerHTML=isRed?'🔴🔴 CLICK NOW 🔴🔴':'🟢🟢 DON\'T CLICK 🟢🟢'; mS.style.color=isRed?'#ff003c':'#00ffcc'; timer=setTimeout(show, Math.random()*1500+500); }
-            mSB.onclick=()=>{ if(timer) clearTimeout(timer); active=true; mR.innerHTML='⚡ GAME ACTIVE'; show(); setTimeout(()=>{ if(active){ active=false; clearTimeout(timer); mS.innerHTML='⚫ GAME OVER'; } },15000); };
-            document.addEventListener('click',(e)=>{ if(!active || e.target===mSB) return; const isRed=mS.innerHTML.includes('🔴🔴 CLICK NOW'); if(isRed){ mR.innerHTML='✅ +100'; if(timer) clearTimeout(timer); show(); } else { mR.innerHTML='❌ PENALTY'; active=false; clearTimeout(timer); mS.innerHTML='⚠️ ERROR'; } });
+            let act=false, tm=null; const ms=document.getElementById('mechStatus'), mr=document.getElementById('mechResult'), mb=document.getElementById('mechStartBtn');
+            function sh(){ if(!act) return; const isR=Math.random()<0.5; ms.innerHTML=isR?'🔴🔴 CLICK NOW 🔴🔴':'🟢🟢 DON\'T CLICK 🟢🟢'; ms.style.color=isR?'#ff003c':'#00ffcc'; tm=setTimeout(sh, Math.random()*1500+500); }
+            mb.onclick=()=>{ if(tm) clearTimeout(tm); act=true; mr.innerHTML='⚡ GAME ACTIVE'; sh(); setTimeout(()=>{ if(act){ act=false; clearTimeout(tm); ms.innerHTML='⚫ GAME OVER'; } },15000); };
+            document.addEventListener('click',(e)=>{ if(!act || e.target===mb) return; const isR=ms.innerHTML.includes('🔴🔴 CLICK NOW'); if(isR){ mr.innerHTML='✅ +100'; if(tm) clearTimeout(tm); sh(); } else { mr.innerHTML='❌ PENALTY'; act=false; clearTimeout(tm); ms.innerHTML='⚠️ ERROR'; } });
         } },
         { title: '🚦 OVERTAKE DUEL', fn: (c) => { c.innerHTML = `<div>Press A (left) or D (right) faster than AI</div><div id="duelStatus" style="font-size:18px;">⚡ READY</div><button id="duelStartBtn">START DUEL</button><div id="duelResult" class="game-stats"></div>`;
-            let duelActive=false, duelStart=null, duelSide='';
-            const dS=document.getElementById('duelStatus'), dR=document.getElementById('duelResult'), dSB=document.getElementById('duelStartBtn');
-            dSB.onclick=()=>{ duelActive=true; duelSide=Math.random()<0.5?'A':'D'; duelStart=Date.now(); dS.innerHTML=`🏁 PRESS ${duelSide} NOW!`; dR.innerHTML=''; setTimeout(()=>{ if(duelActive){ duelActive=false; dS.innerHTML='❌ TOO SLOW'; dR.innerHTML='AI OVERTAKES'; } },1800); };
-            document.addEventListener('keydown',(e)=>{ if(!duelActive) return; const key=e.key.toUpperCase(); if(key===duelSide){ const time=Date.now()-duelStart; duelActive=false; dS.innerHTML=`✅ OVERTAKE! ${time}ms`; dR.innerHTML=time<400?'🏆 PERFECT':'✔️ SUCCESS'; } else if(key==='A'||key==='D'){ duelActive=false; dS.innerHTML='❌ WRONG LANE'; dR.innerHTML='PENALTY'; } });
+            let act=false, st=null, side=''; const ds=document.getElementById('duelStatus'), dr=document.getElementById('duelResult'), db=document.getElementById('duelStartBtn');
+            db.onclick=()=>{ act=true; side=Math.random()<0.5?'A':'D'; st=Date.now(); ds.innerHTML=`🏁 PRESS ${side} NOW!`; dr.innerHTML=''; setTimeout(()=>{ if(act){ act=false; ds.innerHTML='❌ TOO SLOW'; dr.innerHTML='AI OVERTAKES'; } },1800); };
+            document.addEventListener('keydown',(e)=>{ if(!act) return; const k=e.key.toUpperCase(); if(k===side){ const t=Date.now()-st; act=false; ds.innerHTML=`✅ OVERTAKE! ${t}ms`; dr.innerHTML=t<400?'🏆 PERFECT':'✔️ SUCCESS'; } else if(k==='A'||k==='D'){ act=false; ds.innerHTML='❌ WRONG LANE'; dr.innerHTML='PENALTY'; } });
         } },
         { title: '🔢 GRID QUIZ', fn: (c) => { c.innerHTML = `<div id="quizQuestion">Press START</div><input id="quizInput" placeholder="Driver name"><button id="quizStartBtn">START</button><button id="quizCheckBtn">CHECK</button><div id="quizResult" class="game-stats"></div>`;
-            const nums={44:'Lewis Hamilton',1:'Max Verstappen',4:'Lando Norris',16:'Charles Leclerc',63:'George Russell'};
-            let cur='';
-            const qQ=document.getElementById('quizQuestion'), qI=document.getElementById('quizInput'), qR=document.getElementById('quizResult');
-            document.getElementById('quizStartBtn').onclick=()=>{ const keys=Object.keys(nums); cur=keys[Math.floor(Math.random()*keys.length)]; qQ.innerHTML=`🏁 CAR NUMBER: ${cur}`; qI.value=''; qR.innerHTML=''; };
-            document.getElementById('quizCheckBtn').onclick=()=>{ if(!cur){ qR.innerHTML='❌ START'; return; } const ans=qI.value.trim().toLowerCase(); const correct=nums[cur].toLowerCase(); qR.innerHTML=(ans===correct)?'✅ CORRECT':`❌ WRONG → ${nums[cur]}`; };
+            const nums={44:'Lewis Hamilton',1:'Max Verstappen',4:'Lando Norris',16:'Charles Leclerc',63:'George Russell'}; let cur='';
+            const qq=document.getElementById('quizQuestion'), qi=document.getElementById('quizInput'), qr=document.getElementById('quizResult');
+            document.getElementById('quizStartBtn').onclick=()=>{ const ks=Object.keys(nums); cur=ks[Math.floor(Math.random()*ks.length)]; qq.innerHTML=`🏁 CAR NUMBER: ${cur}`; qi.value=''; qr.innerHTML=''; };
+            document.getElementById('quizCheckBtn').onclick=()=>{ if(!cur){ qr.innerHTML='❌ START'; return; } const ans=qi.value.trim().toLowerCase(); qr.innerHTML=(ans===nums[cur].toLowerCase())?'✅ CORRECT':`❌ WRONG → ${nums[cur]}`; };
         } },
         { title: '🌡️ TYRE TEMP', fn: (c) => { c.innerHTML = `<div>Click in GREEN zone (0–500)</div><div id="tempSlider" style="height:20px;background:#222;margin:10px 0;position:relative;"><div id="tempMarker" style="width:4px;height:20px;background:#ff003c;position:absolute;"></div></div><div id="tempValue">0°</div><button id="tempStartBtn">NEW TEMP</button><div id="tempResult" class="game-stats"></div>`;
-            let target=250, score=0;
-            const tV=document.getElementById('tempValue'), tR=document.getElementById('tempResult'), tSB=document.getElementById('tempStartBtn');
-            function up(){ target=Math.floor(Math.random()*1000); tV.innerText=`${target}°`; }
-            tSB.onclick=()=>{ up(); tR.innerHTML=''; score=0; };
-            document.getElementById('tempSlider').onclick=(e)=>{ const rect=e.currentTarget.getBoundingClientRect(); const x=e.clientX-rect.left; const percent=x/rect.width; const clickVal=Math.floor(percent*1000); const diff=Math.abs(clickVal-target); const points=Math.max(0,500-diff); score+=points; tR.innerHTML=`+${points} (total ${score})`; up(); };
+            let t=250, sc=0; const tv=document.getElementById('tempValue'), tr=document.getElementById('tempResult'), tb=document.getElementById('tempStartBtn');
+            function up(){ t=Math.floor(Math.random()*1000); tv.innerText=`${t}°`; }
+            tb.onclick=()=>{ up(); tr.innerHTML=''; sc=0; };
+            document.getElementById('tempSlider').onclick=(e)=>{ const rect=e.currentTarget.getBoundingClientRect(); const x=e.clientX-rect.left; const p=x/rect.width; const cv=Math.floor(p*1000); const d=Math.abs(cv-t); const pts=Math.max(0,500-d); sc+=pts; tr.innerHTML=`+${pts} (total ${sc})`; up(); };
             up();
         } },
         { title: '⛽ FUEL SAVING', fn: (c) => { c.innerHTML = `<div>Click when fuel ≤ 50 (0–100)</div><div id="fuelValue" class="big-number">50</div><button id="fuelStartBtn">NEW LAP</button><div id="fuelResult" class="game-stats"></div>`;
-            let fuel=50, act=true, inter=null;
-            const fV=document.getElementById('fuelValue'), fR=document.getElementById('fuelResult'), fSB=document.getElementById('fuelStartBtn');
-            function startF(){ if(inter) clearInterval(inter); act=true; fuel=Math.floor(Math.random()*80)+20; fV.innerText=fuel; inter=setInterval(()=>{ if(act && fuel>0){ fuel--; fV.innerText=fuel; } },200); }
-            fSB.onclick=()=>{ startF(); fR.innerHTML=''; };
-            document.addEventListener('click',()=>{ if(act && fuel<=50){ fR.innerHTML='✅ PERFECT SAVING! +1 LAP'; act=false; if(inter) clearInterval(inter); } else if(act){ fR.innerHTML='❌ TOO EARLY! FUEL WASTED'; act=false; if(inter) clearInterval(inter); } });
+            let f=50, act=true, inv=null; const fv=document.getElementById('fuelValue'), fr=document.getElementById('fuelResult'), fb=document.getElementById('fuelStartBtn');
+            function startF(){ if(inv) clearInterval(inv); act=true; f=Math.floor(Math.random()*80)+20; fv.innerText=f; inv=setInterval(()=>{ if(act && f>0){ f--; fv.innerText=f; } },200); }
+            fb.onclick=()=>{ startF(); fr.innerHTML=''; };
+            document.addEventListener('click',()=>{ if(act && f<=50){ fr.innerHTML='✅ PERFECT SAVING! +1 LAP'; act=false; if(inv) clearInterval(inv); } else if(act){ fr.innerHTML='❌ TOO EARLY! FUEL WASTED'; act=false; if(inv) clearInterval(inv); } });
             startF();
         } },
         { title: '🕒 PIT WINDOW', fn: (c) => { c.innerHTML = `<div>Click when timer between 10–20</div><div id="pitTimer" class="big-number">0</div><button id="pitWindowStart">RESET</button><div id="pitWindowResult" class="game-stats"></div>`;
-            let t=0, run=true, inter=null;
-            const pT=document.getElementById('pitTimer'), pR=document.getElementById('pitWindowResult'), pSB=document.getElementById('pitWindowStart');
-            function resetT(){ if(inter) clearInterval(inter); t=0; run=true; pT.innerText='0'; inter=setInterval(()=>{ if(run){ t+=0.1; pT.innerText=t.toFixed(1); } },100); }
-            pSB.onclick=()=>{ resetT(); pR.innerHTML=''; };
-            document.addEventListener('click',()=>{ if(run){ const val=parseFloat(pT.innerText); if(val>=10 && val<=20){ pR.innerHTML=`✅ PERFECT PIT! (${val.toFixed(1)}s)`; run=false; clearInterval(inter); } else { pR.innerHTML=`❌ BAD WINDOW (${val.toFixed(1)}s)`; run=false; clearInterval(inter); } } });
+            let t=0, run=true, inv=null; const pt=document.getElementById('pitTimer'), pr=document.getElementById('pitWindowResult'), pb=document.getElementById('pitWindowStart');
+            function resetT(){ if(inv) clearInterval(inv); t=0; run=true; pt.innerText='0'; inv=setInterval(()=>{ if(run){ t+=0.1; pt.innerText=t.toFixed(1); } },100); }
+            pb.onclick=()=>{ resetT(); pr.innerHTML=''; };
+            document.addEventListener('click',()=>{ if(run){ const val=parseFloat(pt.innerText); if(val>=10 && val<=20){ pr.innerHTML=`✅ PERFECT PIT! (${val.toFixed(1)}s)`; run=false; clearInterval(inv); } else { pr.innerHTML=`❌ BAD WINDOW (${val.toFixed(1)}s)`; run=false; clearInterval(inv); } } });
             resetT();
         } },
         { title: '🚥 GRID START', fn: (c) => { c.innerHTML = `<div>Click when lights go OUT</div><div id="lights" style="font-size:28px;">🔴🔴🔴🔴🔴</div><button id="gridStartBtn">RESTART</button><div id="gridResult" class="game-stats"></div>`;
-            let active=false, startTime=null, to=null;
-            const l=document.getElementById('lights'), gr=document.getElementById('gridResult'), gsb=document.getElementById('gridStartBtn');
-            function startL(){ if(to) clearTimeout(to); active=true; startTime=null; let cnt=0; l.innerHTML='🔴🔴🔴🔴🔴'; const intv=setInterval(()=>{ if(cnt<4){ l.innerHTML=l.innerHTML.slice(0,-2); cnt++; } else { clearInterval(intv); const delay=Math.random()*3000+500; to=setTimeout(()=>{ if(active){ l.innerHTML='⚫⚫⚫⚫⚫'; startTime=Date.now(); } },delay); } },800); }
-            gsb.onclick=()=>{ startL(); gr.innerHTML=''; };
-            document.addEventListener('click',(e)=>{ if(active && startTime && e.target!==gsb){ const r=Date.now()-startTime; gr.innerHTML=`✅ ${r} ms`; active=false; if(to) clearTimeout(to); } });
+            let act=false, st=null, to=null; const l=document.getElementById('lights'), gr=document.getElementById('gridResult'), gb=document.getElementById('gridStartBtn');
+            function startL(){ if(to) clearTimeout(to); act=true; st=null; let cnt=0; l.innerHTML='🔴🔴🔴🔴🔴'; const iv=setInterval(()=>{ if(cnt<4){ l.innerHTML=l.innerHTML.slice(0,-2); cnt++; } else { clearInterval(iv); const d=Math.random()*3000+500; to=setTimeout(()=>{ if(act){ l.innerHTML='⚫⚫⚫⚫⚫'; st=Date.now(); } },d); } },800); }
+            gb.onclick=()=>{ startL(); gr.innerHTML=''; };
+            document.addEventListener('click',(e)=>{ if(act && st && e.target!==gb){ const r=Date.now()-st; gr.innerHTML=`✅ ${r} ms`; act=false; if(to) clearTimeout(to); } });
             startL();
         } },
         { title: '🚨 SAFETY CAR', fn: (c) => { c.innerHTML = `<div>Guess safety car number (1–20)</div><input id="scGuess" type="number"><button id="scCheckBtn">GUESS</button><div id="scResult" class="game-stats"></div>`;
-            let secret=Math.floor(Math.random()*20)+1;
-            const scR=document.getElementById('scResult'), scG=document.getElementById('scGuess'), scB=document.getElementById('scCheckBtn');
-            scB.onclick=()=>{ const g=parseInt(scG.value); if(g===secret){ scR.innerHTML='✅ YOU CAUGHT THE SAFETY CAR!'; secret=Math.floor(Math.random()*20)+1; } else { scR.innerHTML=`❌ WRONG → it was ${secret}`; secret=Math.floor(Math.random()*20)+1; } scG.value=''; };
+            let sec=Math.floor(Math.random()*20)+1; const sr=document.getElementById('scResult'), sg=document.getElementById('scGuess'), sb=document.getElementById('scCheckBtn');
+            sb.onclick=()=>{ const g=parseInt(sg.value); if(g===sec){ sr.innerHTML='✅ YOU CAUGHT THE SAFETY CAR!'; sec=Math.floor(Math.random()*20)+1; } else { sr.innerHTML=`❌ WRONG → it was ${sec}`; sec=Math.floor(Math.random()*20)+1; } sg.value=''; };
         } },
         { title: '💨 FASTEST LAP', fn: (c) => { c.innerHTML = `<div>Which colour is fastest? (red/blue/silver)</div><div class="flex-buttons"><button id="colorRed">RED</button><button id="colorBlue">BLUE</button><button id="colorSilver">SILVER</button></div><div id="colorResult" class="game-stats"></div>`;
-            const cr=document.getElementById('colorResult');
-            const check=(c)=> cr.innerHTML=(c==='red')?'✅ FASTEST LAP! +1':'❌ WRONG, red bull is red';
-            document.getElementById('colorRed').onclick=()=>check('red');
-            document.getElementById('colorBlue').onclick=()=>check('blue');
-            document.getElementById('colorSilver').onclick=()=>check('silver');
+            const cr=document.getElementById('colorResult'); const ch=(c)=> cr.innerHTML=(c==='red')?'✅ FASTEST LAP! +1':'❌ WRONG, red bull is red';
+            document.getElementById('colorRed').onclick=()=>ch('red'); document.getElementById('colorBlue').onclick=()=>ch('blue'); document.getElementById('colorSilver').onclick=()=>ch('silver');
         } }
     ];
-    for(let g of miniGames) createGameCard(g.title, g.fn, `mg_${Math.random()}`);
+    for(let i=0;i<gamesList.length;i++) createGameCard(gamesList[i].title, gamesList[i].fn, `game_${i}`);
 </script>
 </body>
 </html>
