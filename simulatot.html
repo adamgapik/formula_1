@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>F1 SIMULATOR · LANDSCAPE ONLY</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .sim-container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        .rotate-warning {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            color: #ff003c;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            padding-top: 50%;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        @media (orientation: portrait) {
+            .rotate-warning {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .race-canvas-container, .race-controls, .sim-panel, #startRaceBtn, #raceInfo {
+                display: none;
+            }
+        }
+        @media (orientation: landscape) {
+            .rotate-warning {
+                display: none;
+            }
+        }
+        .race-canvas-container { background: #000; border-radius: 12px; padding: 8px; margin: 12px 0; border: 1px solid #ff003c; }
+        canvas { display: block; margin: 0 auto; background: #0a0f1a; border-radius: 8px; width: 100%; height: auto; cursor: none; }
+        .race-controls { display: flex; gap: 12px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
+        .race-controls button { margin-top: 0; padding: 10px 20px; font-size: 16px; min-width: 80px; }
+        .sim-panel { background: #0b0e14; border: 1px solid #ff003c; padding: 12px; margin: 12px 0; border-radius: 8px; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; }
+        @media (max-width: 700px) { .race-controls button { padding: 6px 12px; font-size: 12px; min-width: 60px; } }
+    </style>
+</head>
+<body>
+<div class="rotate-warning">
+    📱 ROTATE YOUR PHONE 📱<br>
+    Переверните телефон в горизонтальное положение
+</div>
+<div class="container sim-container">
+    <div class="nav">
+        <a href="index.html">STANDINGS</a>
+        <a href="drivers.html">DRIVERS</a>
+        <a href="teams.html">TEAMS</a>
+        <a href="calendar.html">CALENDAR</a>
+        <a href="news.html">NEWS</a>
+        <a href="games.html">GAMES</a>
+        <a href="simulator.html" class="active">SIMULATOR</a>
+    </div>
+    <h1>🏁 F1 CIRCUIT SIMULATOR · LANDSCAPE MODE</h1>
+    <div style="display:flex; gap:12px; flex-wrap:wrap; justify-content:space-between;">
+        <select id="racingDriver" style="width:48%;">
+            <option value="Max Verstappen">Max Verstappen (Red Bull)</option>
+            <option value="Lewis Hamilton">Lewis Hamilton (Ferrari)</option>
+            <option value="Lando Norris">Lando Norris (McLaren)</option>
+            <option value="Charles Leclerc">Charles Leclerc (Ferrari)</option>
+            <option value="George Russell">George Russell (Mercedes)</option>
+        </select>
+        <select id="trackSelect" style="width:48%;">
+            <option value="monaco">🇲🇨 MONACO (tight)</option>
+            <option value="monza">🇮🇹 MONZA (fast)</option>
+            <option value="silverstone">🇬🇧 SILVERSTONE</option>
+        </select>
+    </div>
+    <div class="sim-panel">
+        <label>🌧️ WEATHER: <select id="weatherSelect"><option value="sunny">☀️ SUNNY</option><option value="rain">🌧️ RAIN</option><option value="night">🌙 NIGHT</option></select></label>
+        <label>🎯 DIFFICULTY: <select id="difficulty"><option value="easy">EASY</option><option value="medium">MEDIUM</option><option value="hard">HARD</option></select></label>
+    </div>
+    <div class="race-canvas-container">
+        <canvas id="raceCanvas" width="1000" height="500" style="width:100%; height:auto; max-width:1000px; aspect-ratio:1000/500"></canvas>
+    </div>
+    <div class="race-controls">
+        <button id="upBtn">⬆️ UP</button>
+        <button id="downBtn">⬇️ DOWN</button>
+        <button id="leftBtn">⬅️ LEFT</button>
+        <button id="rightBtn">➡️ RIGHT</button>
+    </div>
+    <div id="raceInfo" style="font-family:monospace; margin-top:12px; display:flex; justify-content:space-between; flex-wrap:wrap;">
+        <span>🏁 LAPS: <span id="lapCount">0</span>/3</span>
+        <span>💥 STATUS: <span id="statusText">ALIVE</span></span>
+        <span>🏎️ POS: <span id="posText">P1</span></span>
+    </div>
+    <button id="startRaceBtn">🏁 START RACE 🏁</button>
+    <div id="raceMessage" class="game-stats"></div>
+    <div class="footer">⚡ USE BUTTONS TO MOVE · STAY ON TRACK · COLLISION = GAME OVER</div>
+</div>
+<script>
+    (function(){
+        const canvas = document.getElementById('raceCanvas');
+        const ctx = canvas.getContext('2d');
+        let animFrame = null;
+        let raceActive = false;
+        let gameOver = false;
+        
+        let trackPoints = [];
+        let trackWidth = 28;
+        let player = { x: 0, y: 0, lap: 0 };
+        let finishCrossed = false;
+        
+        let moveUp=false, moveDown=false, moveLeft=false, moveRight=false;
+        const STEP = 5;
+        
+        function buildTrack() {
+            const type = document.getElementById('trackSelect').value;
+            trackPoints = [];
+            let cx = canvas.width/2, cy = canvas.height/2;
+            if(type === 'monaco') {
+                for(let i=0;i<=120;i++) { let t=i/120, a=t*Math.PI*2, r=160+Math.sin(a*6)*35; trackPoints.push({x:cx+Math.cos(a)*r, y:cy+Math.sin(a)*r}); }
+            } else if(type === 'monza') {
+                for(let i=0;i<=100;i++) { let t=i/100, a=t*Math.PI*2, r=210+Math.sin(a*2.5)*45; trackPoints.push({x:cx+Math.cos(a)*r, y:cy+Math.sin(a)*r}); }
+            } else {
+                for(let i=0;i<=110;i++) { let t=i/110, a=t*Math.PI*2, r=185+Math.sin(a*4)*40; trackPoints.push({x:cx+Math.cos(a)*r, y:cy+Math.sin(a)*r}); }
+            }
+            trackPoints.push(trackPoints[0]);
+        }
+        
+        function isOnTrack(px, py) {
+            for(let i=0;i<trackPoints.length-1;i++) {
+                let x1=trackPoints[i].x, y1=trackPoints[i].y;
+                let x2=trackPoints[i+1].x, y2=trackPoints[i+1].y;
+                let len = Math.hypot(x2-x1, y2-y1);
+                if(len===0) continue;
+                let t = ((px-x1)*(x2-x1) + (py-y1)*(y2-y1)) / (len*len);
+                t = Math.max(0, Math.min(1, t));
+                let projX = x1 + t*(x2-x1);
+                let projY = y1 + t*(y2-y1);
+                if(Math.hypot(px-projX, py-projY) < trackWidth) return true;
+            }
+            return false;
+        }
+        
+        function checkFinish() {
+            let s=trackPoints[0], e=trackPoints[1];
+            let dx=e.x-s.x, dy=e.y-s.y;
+            let len = Math.hypot(dx,dy);
+            if(len===0) return false;
+            let t = ((player.x-s.x)*dx + (player.y-s.y)*dy) / (len*len);
+            if(t<0 || t>1) return false;
+            let projX = s.x + t*dx, projY = s.y + t*dy;
+            return Math.hypot(player.x-projX, player.y-projY) < trackWidth;
+        }
+        
+        function drawTrack() {
+            ctx.beginPath();
+            ctx.moveTo(trackPoints[0].x, trackPoints[0].y);
+            for(let i=1;i<trackPoints.length;i++) ctx.lineTo(trackPoints[i].x, trackPoints[i].y);
+            ctx.closePath();
+            ctx.strokeStyle = '#ff003c';
+            ctx.lineWidth = trackWidth*2;
+            ctx.stroke();
+            ctx.fillStyle = '#2a2f3a';
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(trackPoints[0].x, trackPoints[0].y);
+            for(let i=1;i<trackPoints.length;i++) ctx.lineTo(trackPoints[i].x, trackPoints[i].y);
+            ctx.closePath();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            let s=trackPoints[0], e=trackPoints[1];
+            let ang = Math.atan2(e.y-s.y, e.x-s.x);
+            let px = -Math.sin(ang), py = Math.cos(ang);
+            ctx.beginPath();
+            ctx.moveTo(s.x+px*trackWidth, s.y+py*trackWidth);
+            ctx.lineTo(s.x-px*trackWidth, s.y-py*trackWidth);
+            ctx.lineTo(e.x-px*trackWidth, e.y-py*trackWidth);
+            ctx.lineTo(e.x+px*trackWidth, e.y+py*trackWidth);
+            ctx.fillStyle = '#fff';
+            ctx.fill();
+            ctx.fillStyle = '#ff003c';
+            ctx.font = 'bold 12px monospace';
+            ctx.fillText('S/F', s.x-15, s.y-10);
+        }
+        
+        function drawCar(x,y,color) {
+            ctx.fillStyle = color;
+            ctx.fillRect(x-8, y-6, 16, 12);
+            ctx.fillStyle = '#111';
+            ctx.fillRect(x-10, y-3, 4, 6);
+            ctx.fillRect(x+6, y-3, 4, 6);
+            ctx.fillStyle = '#888';
+            ctx.fillRect(x-3, y-9, 6, 4);
+        }
+        
+        function getDriverColor(name) {
+            if(name.includes('Verstappen')||name.includes('Hamilton')||name.includes('Leclerc')) return '#e10600';
+            if(name.includes('Norris')) return '#ff8700';
+            if(name.includes('Russell')) return '#00d4ff';
+            return '#ccc';
+        }
+        
+        function applyWeather() {
+            let w = document.getElementById('weatherSelect').value;
+            if(w === 'rain') {
+                ctx.fillStyle = 'rgba(100,150,200,0.25)';
+                ctx.fillRect(0,0,canvas.width,canvas.height);
+                for(let i=0;i<150;i++) { ctx.fillStyle = '#aaf'; ctx.fillRect(10+Math.random()*canvas.width, Math.random()*canvas.height, 2, 6); }
+            } else if(w === 'night') {
+                ctx.fillStyle = 'rgba(0,0,50,0.5)';
+                ctx.fillRect(0,0,canvas.width,canvas.height);
+                for(let i=0;i<80;i++) { ctx.fillStyle = '#ffa'; ctx.beginPath(); ctx.arc(20+Math.random()*canvas.width, 20+Math.random()*canvas.height, 2,0,Math.PI*2); ctx.fill(); }
+            }
+        }
+        
+        function gameLoop() {
+            if(!raceActive || gameOver) return;
+            let nx=player.x, ny=player.y;
+            if(moveUp) ny-=STEP;
+            if(moveDown) ny+=STEP;
+            if(moveLeft) nx-=STEP;
+            if(moveRight) nx+=STEP;
+            if(isOnTrack(nx, ny)) { player.x=nx; player.y=ny; }
+            else { gameOver=true; raceActive=false; document.getElementById('statusText').innerText='CRASHED'; document.getElementById('raceMessage').innerHTML='💥 GAME OVER! YOU LEFT THE TRACK 💥'; if(animFrame) cancelAnimationFrame(animFrame); return; }
+            if(checkFinish()) {
+                if(!finishCrossed) { finishCrossed=true; player.lap++; document.getElementById('lapCount').innerText=player.lap;
+                    if(player.lap>=3) { raceActive=false; document.getElementById('statusText').innerText='FINISHED'; document.getElementById('raceMessage').innerHTML='🏆 RACE COMPLETED! YOU WIN! 🏆'; if(animFrame) cancelAnimationFrame(animFrame); return; }
+                    setTimeout(()=>{ finishCrossed=false; },200);
+                }
+            } else { finishCrossed=false; }
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            ctx.fillStyle='#0a0f1a'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            drawTrack();
+            drawCar(player.x, player.y, getDriverColor(document.getElementById('racingDriver').value));
+            applyWeather();
+            animFrame = requestAnimationFrame(gameLoop);
+        }
+        
+        function initRace() {
+            buildTrack();
+            let s=trackPoints[0], e=trackPoints[1];
+            let ang = Math.atan2(e.y-s.y, e.x-s.x);
+            let px = -Math.sin(ang), py = Math.cos(ang);
+            player.x = s.x + px*5; player.y = s.y + py*5;
+            player.lap=0; finishCrossed=false; gameOver=false;
+            moveUp=false; moveDown=false; moveLeft=false; moveRight=false;
+            document.getElementById('lapCount').innerText='0';
+            document.getElementById('statusText').innerText='ALIVE';
+            document.getElementById('posText').innerText='P1';
+            document.getElementById('raceMessage').innerHTML='🏁 USE BUTTONS TO MOVE · STAY ON TRACK 🏁';
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            ctx.fillStyle='#0a0f1a'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            drawTrack();
+            drawCar(player.x, player.y, getDriverColor(document.getElementById('racingDriver').value));
+            applyWeather();
+        }
+        
+        document.getElementById('upBtn').onmousedown = ()=>{moveUp=true;}; document.getElementById('upBtn').onmouseup = ()=>{moveUp=false;};
+        document.getElementById('upBtn').ontouchstart = e=>{e.preventDefault(); moveUp=true;}; document.getElementById('upBtn').ontouchend = ()=>{moveUp=false;};
+        document.getElementById('downBtn').onmousedown = ()=>{moveDown=true;}; document.getElementById('downBtn').onmouseup = ()=>{moveDown=false;};
+        document.getElementById('downBtn').ontouchstart = e=>{e.preventDefault(); moveDown=true;}; document.getElementById('downBtn').ontouchend = ()=>{moveDown=false;};
+        document.getElementById('leftBtn').onmousedown = ()=>{moveLeft=true;}; document.getElementById('leftBtn').onmouseup = ()=>{moveLeft=false;};
+        document.getElementById('leftBtn').ontouchstart = e=>{e.preventDefault(); moveLeft=true;}; document.getElementById('leftBtn').ontouchend = ()=>{moveLeft=false;};
+        document.getElementById('rightBtn').onmousedown = ()=>{moveRight=true;}; document.getElementById('rightBtn').onmouseup = ()=>{moveRight=false;};
+        document.getElementById('rightBtn').ontouchstart = e=>{e.preventDefault(); moveRight=true;}; document.getElementById('rightBtn').ontouchend = ()=>{moveRight=false;};
+        
+        document.getElementById('startRaceBtn').onclick = () => {
+            if(animFrame) cancelAnimationFrame(animFrame);
+            initRace();
+            raceActive = true;
+            gameOver = false;
+            gameLoop();
+        };
+        canvas.width = 1000; canvas.height = 500;
+        initRace();
+    })();
+</script>
+</body>
+</html>
