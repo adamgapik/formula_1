@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>F1 2026 // SIDE RACING</title>
+    <title>F1 2026 // SIDE RACING (HORIZONTAL)</title>
     <link rel="stylesheet" href="style.css">
     <style>
         .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 24px; }
@@ -18,9 +18,9 @@
         .flex-buttons { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
         .race-canvas-container { background: #000; border-radius: 12px; padding: 8px; margin: 12px 0; border: 1px solid #ff003c; }
         canvas { display: block; margin: 0 auto; background: #0a0f1a; border-radius: 8px; width: 100%; height: auto; cursor: none; }
-        .race-controls { display: flex; gap: 12px; justify-content: center; margin-top: 12px; }
-        .race-controls button { margin-top: 0; padding: 12px 24px; font-size: 18px; min-width: 100px; }
-        @media (max-width: 700px) { .race-controls button { padding: 8px 16px; font-size: 14px; min-width: 70px; } }
+        .race-controls { display: flex; gap: 12px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
+        .race-controls button { margin-top: 0; padding: 10px 20px; font-size: 16px; min-width: 80px; }
+        @media (max-width: 700px) { .race-controls button { padding: 6px 12px; font-size: 12px; min-width: 60px; } }
     </style>
 </head>
 <body>
@@ -33,9 +33,9 @@
         <a href="news.html">NEWS</a>
         <a href="games.html" class="active">GAMES</a>
     </div>
-    <h1>🏁 SIDE RACING · GAS / BRAKE</h1>
+    <h1>🏁 SIDE RACING · HORIZONTAL TRACK</h1>
     <div class="games-grid" id="gamesGrid"></div>
-    <div class="footer">⚡ GAS (↑) / BRAKE (↓) / STEERING (◀ ▶) · SIDE VIEW</div>
+    <div class="footer">⚡ GAS (→) / BRAKE (←) / UP/DOWN (↑↓) · SIDE VIEW</div>
 </div>
 
 <script>
@@ -50,7 +50,7 @@
         if (container) contentFn(container);
     }
 
-    // ========== НАСТОЯЩАЯ ГОНКА: ВИД СБОКУ, ВЫБОР ТРАССЫ, ГАЗ/ТОРМОЗ ==========
+    // ========== ГОРИЗОНТАЛЬНАЯ ГОНКА (ВИД СБОКУ) ==========
     createGameCard('🏁 SIDE RACING · TRACK SELECT', (cont) => {
         cont.innerHTML = `
             <div>Select driver:</div>
@@ -63,20 +63,20 @@
             </select>
             <div style="margin-top:12px;">Select track:</div>
             <select id="trackSelect">
-                <option value="monaco">🇲🇨 MONACO (street circuit)</option>
-                <option value="monza">🇮🇹 MONZA (temple of speed)</option>
-                <option value="silverstone">🇬🇧 SILVERSTONE (high speed)</option>
-                <option value="spa">🇧🇪 SPA-FRANCORCHAMPS</option>
-                <option value="baku">🇦🇿 BAKU (street race)</option>
+                <option value="monaco">🇲🇨 MONACO (street)</option>
+                <option value="monza">🇮🇹 MONZA (speed)</option>
+                <option value="silverstone">🇬🇧 SILVERSTONE</option>
+                <option value="spa">🇧🇪 SPA</option>
+                <option value="baku">🇦🇿 BAKU</option>
             </select>
             <div class="race-canvas-container">
-                <canvas id="raceCanvas" width="1000" height="500" style="width:100%; height:auto; max-width:1000px; aspect-ratio:1000/500"></canvas>
+                <canvas id="raceCanvas" width="1100" height="500" style="width:100%; height:auto; max-width:1100px; aspect-ratio:1100/500"></canvas>
             </div>
             <div class="race-controls">
-                <button id="gasBtn">⚡ GAS (↑)</button>
-                <button id="brakeBtn">🛑 BRAKE (↓)</button>
-                <button id="leftBtn">◀ LEFT</button>
-                <button id="rightBtn">RIGHT ▶</button>
+                <button id="gasBtn">⚡ GAS (→)</button>
+                <button id="brakeBtn">🛑 BRAKE (←)</button>
+                <button id="upBtn">⬆️ UP</button>
+                <button id="downBtn">⬇️ DOWN</button>
             </div>
             <div id="raceInfo" style="font-family:monospace; margin-top:12px; display:flex; justify-content:space-between; flex-wrap:wrap;">
                 <span>🏁 LAPS: <span id="lapCount">0</span>/5</span>
@@ -93,12 +93,12 @@
         let animationId = null;
         let raceActive = false;
         
-        // Физика игрока
-        let player = { x: 480, y: 380, width: 45, height: 55, speed: 0 };
-        const ACC = 0.55;
-        const BRAKE_FORCE = 0.88;
+        // ГОРИЗОНТАЛЬНАЯ ФИЗИКА
+        let player = { x: 100, y: 240, width: 55, height: 40, speed: 0 };
+        const ACC = 0.65;
+        const BRAKE_FORCE = 0.85;
         const FRICTION = 0.98;
-        const MAX_SPEED = 16;
+        const MAX_SPEED = 18;
         
         let opponents = [];
         let laps = 0;
@@ -106,43 +106,42 @@
         let finishLineCrossed = false;
         let currentPosition = 8;
         
-        const TRACK_TOP = 60;
-        const TRACK_BOTTOM = 440;
-        const FINISH_LINE_Y = 70;
+        const TRACK_LEFT = 40;
+        const TRACK_RIGHT = canvas.width - 40;
+        const FINISH_LINE_X = canvas.width - 80;
         
         let gasPressed = false;
         let brakePressed = false;
-        let leftPressed = false;
-        let rightPressed = false;
+        let upPressed = false;
+        let downPressed = false;
         
-        // Фоновые изображения трасс (цветные градиенты + элементы)
         function drawTrackBackground(trackId) {
-            const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            const grad = ctx.createLinearGradient(0, 0, canvas.width, 0);
             if(trackId === 'monaco') {
                 grad.addColorStop(0, '#1a2a3a'); grad.addColorStop(1, '#2a3a4a');
                 ctx.fillStyle = grad; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#ffd700'; ctx.font = 'bold 28px monospace'; ctx.fillText('🇲🇨 MONACO', canvas.width-180, 40);
-                for(let i=0;i<20;i++) ctx.fillRect(50 + i*45, 200, 15, 80);
+                ctx.fillStyle = '#ffd700'; ctx.font = 'bold 28px monospace'; ctx.fillText('🇲🇨 MONACO', 40, 50);
+                for(let i=0;i<15;i++) ctx.fillRect(200 + i*60, 150, 10, 80);
             } else if(trackId === 'monza') {
                 grad.addColorStop(0, '#1a3a1a'); grad.addColorStop(1, '#2a4a2a');
                 ctx.fillStyle = grad; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#00ff00'; ctx.font = 'bold 28px monospace'; ctx.fillText('🇮🇹 MONZA', canvas.width-160, 40);
-                for(let i=0;i<12;i++) ctx.fillRect(100 + i*70, 300, 20, 60);
+                ctx.fillStyle = '#00ff00'; ctx.font = 'bold 28px monospace'; ctx.fillText('🇮🇹 MONZA', 40, 50);
+                for(let i=0;i<12;i++) ctx.fillRect(100 + i*80, 350, 15, 60);
             } else if(trackId === 'silverstone') {
                 grad.addColorStop(0, '#2a2a3a'); grad.addColorStop(1, '#3a3a4a');
                 ctx.fillStyle = grad; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#00aaff'; ctx.font = 'bold 28px monospace'; ctx.fillText('🇬🇧 SILVERSTONE', canvas.width-220, 40);
-                for(let i=0;i<15;i++) ctx.fillRect(80 + i*55, 150, 10, 120);
+                ctx.fillStyle = '#00aaff'; ctx.font = 'bold 28px monospace'; ctx.fillText('🇬🇧 SILVERSTONE', 40, 50);
+                for(let i=0;i<18;i++) ctx.fillRect(120 + i*55, 280, 8, 90);
             } else if(trackId === 'spa') {
                 grad.addColorStop(0, '#2a3a2a'); grad.addColorStop(1, '#3a4a3a');
                 ctx.fillStyle = grad; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#88ff88'; ctx.font = 'bold 28px monospace'; ctx.fillText('🇧🇪 SPA', canvas.width-140, 40);
-                for(let i=0;i<18;i++) ctx.fillRect(60 + i*50, 250, 12, 100);
+                ctx.fillStyle = '#88ff88'; ctx.font = 'bold 28px monospace'; ctx.fillText('🇧🇪 SPA', 40, 50);
+                for(let i=0;i<20;i++) ctx.fillRect(80 + i*50, 200, 10, 70);
             } else {
                 grad.addColorStop(0, '#3a2a1a'); grad.addColorStop(1, '#4a3a2a');
                 ctx.fillStyle = grad; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#ffaa44'; ctx.font = 'bold 28px monospace'; ctx.fillText('🇦🇿 BAKU', canvas.width-120, 40);
-                for(let i=0;i<22;i++) ctx.fillRect(40 + i*42, 350, 8, 50);
+                ctx.fillStyle = '#ffaa44'; ctx.font = 'bold 28px monospace'; ctx.fillText('🇦🇿 BAKU', 40, 50);
+                for(let i=0;i<22;i++) ctx.fillRect(60 + i*45, 400, 8, 60);
             }
         }
         
@@ -157,32 +156,31 @@
             opponents = [];
             for(let i = 0; i < 7; i++) {
                 opponents.push({
-                    x: 50 + Math.random() * (canvas.width - 90),
-                    y: TRACK_TOP + 15 + Math.random() * (TRACK_BOTTOM - TRACK_TOP - 70),
-                    width: 42,
-                    height: 52,
-                    baseSpeed: 1.3 + Math.random() * 2.2,
-                    speed: 1.3 + Math.random() * 2.2,
+                    x: TRACK_LEFT + 80 + Math.random() * (TRACK_RIGHT - TRACK_LEFT - 150),
+                    y: 40 + Math.random() * (canvas.height - 100),
+                    width: 55,
+                    height: 40,
+                    baseSpeed: 1.5 + Math.random() * 2.2,
                     passed: false
                 });
             }
             laps = 0;
             overtakes = 0;
             finishLineCrossed = false;
-            player.y = 400;
-            player.x = canvas.width/2 - 22;
+            player.x = TRACK_LEFT + 20;
+            player.y = canvas.height/2 - 20;
             player.speed = 0;
             currentPosition = 8;
-            gasPressed = false; brakePressed = false; leftPressed = false; rightPressed = false;
+            gasPressed = false; brakePressed = false; upPressed = false; downPressed = false;
             document.getElementById('lapCount').innerText = laps;
             document.getElementById('overtakesCount').innerText = overtakes;
             document.getElementById('positionText').innerText = 'P8';
             document.getElementById('speedDisplay').innerText = '0';
-            document.getElementById('raceMessage').innerHTML = '🏁 PRESS GAS (↑) TO START 🏁';
+            document.getElementById('raceMessage').innerHTML = '🏁 PRESS GAS (→) TO START 🏁';
         }
         
         function updatePosition() {
-            let ahead = opponents.filter(o => o.y < player.y - 15).length;
+            let ahead = opponents.filter(o => o.x > player.x + 10).length;
             let pos = ahead + 1;
             currentPosition = Math.min(pos, 8);
             document.getElementById('positionText').innerText = `P${currentPosition}`;
@@ -198,41 +196,40 @@
             player.speed *= FRICTION;
             if(player.speed < 0.1 && !gasPressed && !brakePressed) player.speed = 0;
             
-            let moveY = player.speed;
-            player.y -= moveY;
-            if(player.y < TRACK_TOP) player.y = TRACK_TOP;
-            if(player.y > TRACK_BOTTOM - player.height) player.y = TRACK_BOTTOM - player.height;
+            player.x += player.speed;
+            if(player.x > TRACK_RIGHT - player.width) player.x = TRACK_RIGHT - player.width;
+            if(player.x < TRACK_LEFT) player.x = TRACK_LEFT;
             
-            if(leftPressed) player.x -= 7;
-            if(rightPressed) player.x += 7;
-            if(player.x < 20) player.x = 20;
-            if(player.x > canvas.width - player.width - 20) player.x = canvas.width - player.width - 20;
+            if(upPressed) player.y -= 6;
+            if(downPressed) player.y += 6;
+            if(player.y < 30) player.y = 30;
+            if(player.y > canvas.height - player.height - 20) player.y = canvas.height - player.height - 20;
             
             for(let opp of opponents) {
-                let effectiveSpeed = opp.baseSpeed * (0.8 + Math.random() * 0.7);
-                opp.y -= effectiveSpeed;
-                if(opp.y + opp.height < TRACK_TOP) {
-                    opp.y = TRACK_BOTTOM;
-                    opp.x = 50 + Math.random() * (canvas.width - 90);
+                let effectiveSpeed = opp.baseSpeed * (0.7 + Math.random() * 0.8);
+                opp.x -= effectiveSpeed;
+                if(opp.x + opp.width < TRACK_LEFT) {
+                    opp.x = TRACK_RIGHT;
+                    opp.y = 40 + Math.random() * (canvas.height - 100);
                     opp.passed = false;
                 }
-                if(opp.y + opp.height < FINISH_LINE_Y && !opp.passed) opp.passed = true;
+                if(opp.x + opp.width < FINISH_LINE_X && !opp.passed) opp.passed = true;
             }
             
             for(let opp of opponents) {
                 if(player.x < opp.x + opp.width && player.x + player.width > opp.x &&
                    player.y < opp.y + opp.height && player.y + player.height > opp.y) {
-                    player.speed = Math.max(0, player.speed - 5);
-                    player.y += 15;
-                    if(player.y > TRACK_BOTTOM - player.height) player.y = TRACK_BOTTOM - player.height;
+                    player.speed = Math.max(0, player.speed - 4);
+                    player.x -= 20;
+                    if(player.x < TRACK_LEFT) player.x = TRACK_LEFT;
                     document.getElementById('raceMessage').innerHTML = '⚠️ COLLISION! ⚠️';
                     setTimeout(() => { if(raceActive) document.getElementById('raceMessage').innerHTML = '🏁 RACING 🏁'; }, 700);
                 }
             }
             
             for(let opp of opponents) {
-                if(!opp.passed && player.y + player.height < opp.y + 10 && player.y < opp.y) {
-                    if(player.x < opp.x + opp.width && player.x + player.width > opp.x) {
+                if(!opp.passed && player.x + player.width > opp.x + 5 && player.x < opp.x + opp.width) {
+                    if(Math.abs(player.y - opp.y) < 30) {
                         opp.passed = true;
                         overtakes++;
                         document.getElementById('overtakesCount').innerText = overtakes;
@@ -242,7 +239,7 @@
                 }
             }
             
-            if(player.y + player.height < FINISH_LINE_Y && !finishLineCrossed) {
+            if(player.x + player.width > FINISH_LINE_X && !finishLineCrossed) {
                 finishLineCrossed = true;
                 laps++;
                 document.getElementById('lapCount').innerText = laps;
@@ -258,9 +255,8 @@
                     if(animationId) cancelAnimationFrame(animationId);
                     return;
                 }
-                finishLineCrossed = false;
+                setTimeout(() => { finishLineCrossed = false; }, 500);
             }
-            if(player.y + player.height >= FINISH_LINE_Y + 15) finishLineCrossed = false;
             
             updatePosition();
             document.getElementById('speedDisplay').innerText = Math.floor(player.speed * 14);
@@ -268,16 +264,20 @@
             drawTrackBackground(trackId);
             
             ctx.fillStyle = '#2a2f3a';
-            ctx.fillRect(0, TRACK_TOP, canvas.width, TRACK_BOTTOM - TRACK_TOP);
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#3a3f4a';
+            ctx.fillRect(TRACK_LEFT-5, 0, TRACK_RIGHT - TRACK_LEFT + 10, canvas.height);
+            ctx.fillStyle = '#1a1f2a';
+            ctx.fillRect(TRACK_LEFT, 0, TRACK_RIGHT - TRACK_LEFT, canvas.height);
             for(let i = 0; i < 25; i++) {
                 ctx.fillStyle = i % 2 === 0 ? '#ff003c' : '#ffffff';
-                ctx.fillRect(canvas.width/2 - 12, TRACK_TOP + i*22, 24, 8);
+                ctx.fillRect(TRACK_LEFT + 30 + i*45, canvas.height-25, 20, 8);
             }
             ctx.fillStyle = '#ff003c';
-            ctx.fillRect(0, FINISH_LINE_Y - 5, canvas.width, 6);
+            ctx.fillRect(FINISH_LINE_X - 8, 0, 10, canvas.height);
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 16px monospace';
-            ctx.fillText('FINISH', canvas.width/2 - 35, FINISH_LINE_Y - 10);
+            ctx.fillText('FINISH', FINISH_LINE_X - 40, canvas.height-20);
             
             for(let opp of opponents) {
                 ctx.fillStyle = '#4a5568';
@@ -294,19 +294,19 @@
             ctx.fillStyle = playerColor;
             ctx.fillRect(player.x, player.y, player.width, player.height);
             ctx.fillStyle = '#111';
-            ctx.fillRect(player.x+8, player.y+10, 8, 14);
-            ctx.fillRect(player.x+player.width-16, player.y+10, 8, 14);
+            ctx.fillRect(player.x+8, player.y+8, 10, 12);
+            ctx.fillRect(player.x+player.width-18, player.y+8, 10, 12);
             ctx.fillStyle = '#fff';
-            ctx.font = 'bold 12px monospace';
-            ctx.fillText(driverName.split(' ')[0], player.x+5, player.y-5);
+            ctx.font = 'bold 11px monospace';
+            ctx.fillText(driverName.split(' ')[0], player.x+8, player.y-5);
             
             animationId = requestAnimationFrame(updateGame);
         }
         
         const gasBtn = document.getElementById('gasBtn');
         const brakeBtn = document.getElementById('brakeBtn');
-        const leftBtn = document.getElementById('leftBtn');
-        const rightBtn = document.getElementById('rightBtn');
+        const upBtn = document.getElementById('upBtn');
+        const downBtn = document.getElementById('downBtn');
         
         gasBtn.onmousedown = () => { gasPressed = true; };
         gasBtn.onmouseup = () => { gasPressed = false; };
@@ -318,15 +318,15 @@
         brakeBtn.ontouchstart = (e) => { e.preventDefault(); brakePressed = true; };
         brakeBtn.ontouchend = () => { brakePressed = false; };
         
-        leftBtn.onmousedown = () => { leftPressed = true; };
-        leftBtn.onmouseup = () => { leftPressed = false; };
-        leftBtn.ontouchstart = (e) => { e.preventDefault(); leftPressed = true; };
-        leftBtn.ontouchend = () => { leftPressed = false; };
+        upBtn.onmousedown = () => { upPressed = true; };
+        upBtn.onmouseup = () => { upPressed = false; };
+        upBtn.ontouchstart = (e) => { e.preventDefault(); upPressed = true; };
+        upBtn.ontouchend = () => { upPressed = false; };
         
-        rightBtn.onmousedown = () => { rightPressed = true; };
-        rightBtn.onmouseup = () => { rightPressed = false; };
-        rightBtn.ontouchstart = (e) => { e.preventDefault(); rightPressed = true; };
-        rightBtn.ontouchend = () => { rightPressed = false; };
+        downBtn.onmousedown = () => { downPressed = true; };
+        downBtn.onmouseup = () => { downPressed = false; };
+        downBtn.ontouchstart = (e) => { e.preventDefault(); downPressed = true; };
+        downBtn.ontouchend = () => { downPressed = false; };
         
         document.getElementById('startRaceBtn').onclick = () => {
             if(animationId) cancelAnimationFrame(animationId);
@@ -335,12 +335,12 @@
             updateGame();
         };
         
-        canvas.width = 1000;
+        canvas.width = 1100;
         canvas.height = 500;
         initRace();
     }, 'gameRacing');
 
-    // ========== ОСТАЛЬНЫЕ 14 МИНИ-ИГР (БЕЗ ИЗМЕНЕНИЙ) ==========
+    // ========== ОСТАЛЬНЫЕ 14 ИГР (КОРОТКО) ==========
     createGameCard('⏱️ REACTION PIT STOP', (cont) => {
         cont.innerHTML = `<div>Click when light turns GREEN</div><div id="pitStatus" style="margin:12px 0;font-size:20px;font-weight:800;">🔴 WAITING</div><button id="pitBtn">START</button><div id="pitResult" class="game-stats"></div>`;
         let pitTimer=null, pitStart=null, pitActive=false;
