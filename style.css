@@ -38,7 +38,6 @@ body {
     font-size: 14px;
     padding: 10px 16px;
     transition: 0.2s;
-    letter-spacing: 0.5px;
 }
 
 .nav a.active,
@@ -56,10 +55,9 @@ h1 {
     border-left: 4px solid #00c8ff;
     padding-left: 18px;
     text-shadow: 0 0 5px #00c8ff;
-    letter-spacing: -0.5px;
 }
 
-/* ===== СТАТИСТИКА (ГЛАВНАЯ) ===== */
+/* ===== СТАТИСТИКА ===== */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -72,7 +70,6 @@ h1 {
     border: 1px solid #ff003c;
     padding: 24px;
     transition: 0.2s;
-    box-shadow: 0 0 4px rgba(255, 0, 60, 0.3);
 }
 
 .stat-card:hover {
@@ -96,13 +93,11 @@ h1 {
     text-shadow: 0 0 3px #fff;
 }
 
-/* ===== БЛИЖАЙШАЯ ГОНКА ===== */
 .next-card {
     background: #0b0e14;
     border-left: 6px solid #ff003c;
     padding: 24px;
     margin-bottom: 32px;
-    border-top: 1px solid #222;
 }
 
 /* ===== ТАБЛИЦЫ ===== */
@@ -127,8 +122,6 @@ th, td {
 th {
     background: #05070c;
     color: #00c8ff;
-    font-weight: 700;
-    letter-spacing: 0.5px;
 }
 
 /* ===== КАЛЕНДАРЬ ===== */
@@ -142,7 +135,6 @@ th {
     background: #0b0e14;
     border: 1px solid #ff003c;
     padding: 18px;
-    transition: 0.1s;
 }
 
 .race-card:hover {
@@ -181,7 +173,6 @@ th {
     background: #0b0e14;
     border: 1px solid #ff003c;
     padding: 16px;
-    transition: 0.1s;
 }
 
 .news-card:hover {
@@ -213,14 +204,14 @@ th {
 /* ===== ИГРЫ ===== */
 .games-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
     gap: 28px;
 }
 
 .game-card {
     background: #0b0e14;
     border: 1px solid #ff003c;
-    padding: 24px;
+    padding: 20px;
     transition: 0.2s;
 }
 
@@ -230,19 +221,19 @@ th {
 }
 
 .game-title {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 800;
     margin-bottom: 16px;
     color: #ff003c;
 }
 
-button {
+button, .game-btn {
     background: #ff003c;
     border: none;
     color: #000;
     font-weight: 700;
-    padding: 10px 20px;
-    margin-top: 16px;
+    padding: 8px 16px;
+    margin-top: 12px;
     cursor: pointer;
     font-family: monospace;
     transition: 0.1s;
@@ -253,10 +244,32 @@ button:hover {
     box-shadow: 0 0 8px #00c8ff;
 }
 
+input, select {
+    background: #0b0e14;
+    border: 1px solid #ff003c;
+    color: #eef2ff;
+    padding: 8px;
+    width: 100%;
+    margin-top: 10px;
+}
+
 .game-stats {
-    margin-top: 16px;
+    margin-top: 12px;
     font-size: 13px;
     color: #b0c4de;
+}
+
+.big-number {
+    font-size: 28px;
+    font-weight: 800;
+    margin: 8px 0;
+}
+
+.flex-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
 }
 
 /* ===== ПОДВАЛ ===== */
@@ -269,29 +282,12 @@ button:hover {
     color: #6a7c94;
 }
 
-/* ===== АДАПТАЦИЯ ДЛЯ ТЕЛЕФОНОВ ===== */
+/* ===== АДАПТАЦИЯ ===== */
 @media (max-width: 768px) {
-    body {
-        padding: 16px;
-    }
-    .stat-value {
-        font-size: 26px;
-    }
-    .nav a {
-        min-width: 80px;
-        padding: 6px 12px;
-        font-size: 12px;
-    }
-    .games-grid,
-    .race-grid,
-    .news-grid {
-        grid-template-columns: 1fr;
-    }
-    th, td {
-        padding: 10px 8px;
-        font-size: 12px;
-    }
-    h1 {
-        font-size: 22px;
-    }
+    body { padding: 16px; }
+    .stat-value { font-size: 26px; }
+    .nav a { min-width: 80px; padding: 6px 12px; font-size: 12px; }
+    .games-grid, .race-grid, .news-grid { grid-template-columns: 1fr; }
+    th, td { padding: 10px 8px; font-size: 12px; }
+    h1 { font-size: 22px; }
 }
