@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>F1 ULTIMATE SIMULATOR | SIDE RACING</title>
+    <title>F1 ULTIMATE SIMULATOR · CIRCUIT RACING</title>
     <link rel="stylesheet" href="style.css">
     <style>
         * { user-select: none; -webkit-tap-highlight-color: transparent; }
@@ -34,9 +34,9 @@
         <a href="news.html">NEWS</a>
         <a href="games.html" class="active">SIMULATOR</a>
     </div>
-    <h1>🏁 F1 ULTIMATE SIMULATOR · SIDE RACING</h1>
+    <h1>🏁 F1 CIRCUIT RACING · SIDE VIEW</h1>
     <div class="games-grid" id="gamesGrid"></div>
-    <div class="footer">⚡ GAS / BRAKE / STEERING · REAL PHYSICS · DYNAMIC WEATHER</div>
+    <div class="footer">⚡ GAS / BRAKE / STEERING · REAL F1 PHYSICS · CIRCUIT LAYOUT</div>
 </div>
 
 <script>
@@ -51,8 +51,8 @@
         if (container) contentFn(container);
     }
 
-    // ==================== ПОЛНОЦЕННЫЙ АВТОСИМУЛЯТОР ====================
-    createGameCard('🏎️ ULTIMATE RACING SIMULATOR', (cont) => {
+    // ========== ПОЛНОЦЕННЫЙ КОЛЬЦЕВОЙ СИМУЛЯТОР ==========
+    createGameCard('🏎️ F1 CIRCUIT SIMULATOR', (cont) => {
         cont.innerHTML = `
             <div style="display:flex; gap:12px; flex-wrap:wrap; justify-content:space-between;">
                 <select id="racingDriver" style="width:48%;">
@@ -68,16 +68,15 @@
                     <option value="silverstone">🇬🇧 SILVERSTONE</option>
                     <option value="spa">🇧🇪 SPA</option>
                     <option value="baku">🇦🇿 BAKU</option>
-                    <option value="singapore">🇸🇬 SINGAPORE</option>
                 </select>
             </div>
             <div class="sim-panel">
                 <label>🌧️ WEATHER: <select id="weatherSelect"><option value="sunny">☀️ SUNNY</option><option value="rain">🌧️ RAIN</option><option value="night">🌙 NIGHT</option></select></label>
-                <label>🏎️ DOWNFORCE: <input type="range" id="downforceSlider" min="0" max="100" value="60" style="width:120px;"></label>
+                <label>🏎️ DOWNFORCE: <input type="range" id="downforceSlider" min="0" max="100" value="65" style="width:120px;"></label>
                 <label>⚙️ TRACTION: <input type="range" id="tractionSlider" min="0" max="100" value="70" style="width:120px;"></label>
             </div>
             <div class="race-canvas-container">
-                <canvas id="raceCanvas" width="900" height="750" style="width:100%; height:auto; max-width:900px; aspect-ratio:900/750"></canvas>
+                <canvas id="raceCanvas" width="1000" height="700" style="width:100%; height:auto; max-width:1000px; aspect-ratio:1000/700"></canvas>
             </div>
             <div class="race-controls">
                 <button id="gasBtn">⚡ GAS (↑)</button>
@@ -86,7 +85,7 @@
                 <button id="rightBtn">RIGHT ▶</button>
             </div>
             <div id="raceInfo" style="font-family:monospace; margin-top:12px; display:flex; justify-content:space-between; flex-wrap:wrap;">
-                <span>🏁 LAPS: <span id="lapCount">0</span>/5</span>
+                <span>🏁 LAPS: <span id="lapCount">0</span>/6</span>
                 <span>🏆 POS: <span id="positionText">P8</span></span>
                 <span>⚡ OVERTAKES: <span id="overtakesCount">0</span></span>
                 <span>🏎️ SPEED: <span id="speedDisplay">0</span> km/h</span>
@@ -101,9 +100,9 @@
         let animFrame = null;
         let raceActive = false;
         
-        // ФИЗИКА ИГРОКА
-        let player = { x: canvas.width/2 - 30, y: canvas.height - 100, width: 60, height: 75, speed: 0, fuel: 100, tireWear: 0 };
-        const MAX_SPEED_BASE = 18;
+        // Игрок – реалистичный болид F1 (вид сбоку)
+        let player = { x: canvas.width/2 - 35, y: canvas.height - 110, width: 70, height: 85, speed: 0 };
+        const MAX_SPEED_BASE = 20;
         let currentMaxSpeed = MAX_SPEED_BASE;
         let grip = 1.0;
         
@@ -114,49 +113,102 @@
         
         let gas = false, brake = false, left = false, right = false;
         
-        // ПОГОДА И НАСТРОЙКИ
         function updatePhysicsParams() {
             const weather = document.getElementById('weatherSelect').value;
             const downforce = parseInt(document.getElementById('downforceSlider').value) / 100;
             const traction = parseInt(document.getElementById('tractionSlider').value) / 100;
-            let gripBase = 1.0;
-            if(weather === 'rain') gripBase = 0.65;
-            else if(weather === 'night') gripBase = 0.85;
-            else gripBase = 1.0;
+            let gripBase = weather === 'rain' ? 0.6 : (weather === 'night' ? 0.85 : 1.0);
             grip = gripBase * (0.7 + downforce * 0.3) * (0.7 + traction * 0.3);
-            currentMaxSpeed = MAX_SPEED_BASE * (0.8 + downforce * 0.2);
+            currentMaxSpeed = MAX_SPEED_BASE * (0.8 + downforce * 0.25);
             document.getElementById('gripDisplay').innerText = Math.floor(grip * 100);
         }
         
-        function drawWeatherOverlay() {
-            const weather = document.getElementById('weatherSelect').value;
-            if(weather === 'rain') {
-                ctx.fillStyle = 'rgba(100,150,200,0.2)';
-                ctx.fillRect(0,0,canvas.width,canvas.height);
-                for(let i=0;i<200;i++) {
-                    ctx.fillStyle = '#aaf';
-                    ctx.fillRect(10+Math.random()*canvas.width, Math.random()*canvas.height, 2, 8);
-                }
-            } else if(weather === 'night') {
-                ctx.fillStyle = 'rgba(0,0,50,0.5)';
-                ctx.fillRect(0,0,canvas.width,canvas.height);
-                for(let i=0;i<100;i++) {
-                    ctx.fillStyle = '#ffa';
-                    ctx.beginPath(); ctx.arc(20+Math.random()*canvas.width, 20+Math.random()*canvas.height, 2,0,Math.PI*2); ctx.fill();
-                }
-            }
+        function drawF1Car(x, y, w, h, color) {
+            // Кузов
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, w, h);
+            // Носовое антикрыло
+            ctx.fillStyle = '#222';
+            ctx.fillRect(x+5, y-8, 20, 8);
+            ctx.fillRect(x+w-25, y-8, 20, 8);
+            // Заднее антикрыло
+            ctx.fillRect(x+10, y+h-6, w-20, 8);
+            // Кокпит (место пилота)
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(x+20, y+15, 30, 20);
+            // Колёса
+            ctx.fillStyle = '#111';
+            ctx.fillRect(x-5, y+15, 8, 20);
+            ctx.fillRect(x-5, y+h-35, 8, 20);
+            ctx.fillRect(x+w-3, y+15, 8, 20);
+            ctx.fillRect(x+w-3, y+h-35, 8, 20);
+            // Воздухозаборник
+            ctx.fillStyle = '#444';
+            ctx.fillRect(x+30, y+5, 10, 10);
+            // Halo
+            ctx.fillStyle = '#888';
+            ctx.fillRect(x+15, y+12, 40, 5);
+        }
+        
+        function drawOpponentCar(x, y, w, h) {
+            ctx.fillStyle = '#4a5568';
+            ctx.fillRect(x, y, w, h);
+            ctx.fillStyle = '#2d3748';
+            ctx.fillRect(x+10, y+12, w-20, 16);
+            ctx.fillStyle = '#a0aec0';
+            ctx.fillRect(x+15, y+40, 10, 18);
+            ctx.fillRect(x+w-25, y+40, 10, 18);
+            ctx.fillStyle = '#333';
+            ctx.fillRect(x-4, y+18, 6, 18);
+            ctx.fillRect(x-4, y+h-30, 6, 18);
+            ctx.fillRect(x+w-2, y+18, 6, 18);
+            ctx.fillRect(x+w-2, y+h-30, 6, 18);
         }
         
         function drawTrackBackground() {
             const track = document.getElementById('trackSelect').value;
             const grad = ctx.createLinearGradient(0,0,0,canvas.height);
-            if(track==='monaco') grad.addColorStop(0,'#1a2a3a'); else if(track==='monza') grad.addColorStop(0,'#1a3a1a'); else if(track==='silverstone') grad.addColorStop(0,'#2a2a3a'); else if(track==='spa') grad.addColorStop(0,'#2a3a2a'); else if(track==='singapore') grad.addColorStop(0,'#2a1a3a'); else grad.addColorStop(0,'#3a2a1a');
+            if(track==='monaco') grad.addColorStop(0,'#1a2a3a');
+            else if(track==='monza') grad.addColorStop(0,'#1a3a1a');
+            else if(track==='silverstone') grad.addColorStop(0,'#2a2a3a');
+            else if(track==='spa') grad.addColorStop(0,'#2a3a2a');
+            else grad.addColorStop(0,'#3a2a1a');
             ctx.fillStyle = grad; ctx.fillRect(0,0,canvas.width,canvas.height);
-            ctx.fillStyle = '#1a1f2c'; ctx.fillRect(0,0,canvas.width,canvas.height);
-            ctx.fillStyle = '#2a2f3a'; ctx.fillRect(80,0,canvas.width-160,canvas.height);
-            for(let i=0;i<22;i++) { ctx.fillStyle = i%2===0?'#ff003c':'#fff'; ctx.fillRect(canvas.width/2-12, 30+i*40, 24, 10); }
-            ctx.fillStyle = '#ff003c'; ctx.fillRect(0,FINISH_Y-3,canvas.width,8);
-            ctx.fillStyle = '#fff'; ctx.font = 'bold 18px monospace'; ctx.fillText('FINISH', canvas.width/2-35, FINISH_Y+18);
+            // Асфальт
+            ctx.fillStyle = '#1a1f2c';
+            ctx.fillRect(0,0,canvas.width,canvas.height);
+            ctx.fillStyle = '#2a2f3a';
+            ctx.fillRect(70,0,canvas.width-140,canvas.height);
+            // Разметка трассы (пунктир)
+            for(let i=0;i<30;i++) {
+                ctx.fillStyle = i%2===0 ? '#ff003c' : '#fff';
+                ctx.fillRect(canvas.width/2-15, 25 + i*35, 30, 8);
+            }
+            // Линия финиша
+            ctx.fillStyle = '#ff003c';
+            ctx.fillRect(0, FINISH_Y-4, canvas.width, 8);
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 18px monospace';
+            ctx.fillText('FINISH', canvas.width/2-40, FINISH_Y+18);
+        }
+        
+        function drawWeather() {
+            const weather = document.getElementById('weatherSelect').value;
+            if(weather === 'rain') {
+                ctx.fillStyle = 'rgba(100,150,200,0.25)';
+                ctx.fillRect(0,0,canvas.width,canvas.height);
+                for(let i=0;i<250;i++) {
+                    ctx.fillStyle = '#aaf';
+                    ctx.fillRect(10+Math.random()*canvas.width, Math.random()*canvas.height, 2, 8);
+                }
+            } else if(weather === 'night') {
+                ctx.fillStyle = 'rgba(0,0,50,0.6)';
+                ctx.fillRect(0,0,canvas.width,canvas.height);
+                for(let i=0;i<150;i++) {
+                    ctx.fillStyle = '#ffa';
+                    ctx.beginPath(); ctx.arc(20+Math.random()*canvas.width, 20+Math.random()*canvas.height, 2,0,Math.PI*2); ctx.fill();
+                }
+            }
         }
         
         function getDriverColor(name) {
@@ -171,23 +223,26 @@
             for(let i=0;i<7;i++) {
                 opponents.push({
                     x: 100 + Math.random() * (canvas.width-200),
-                    y: 150 + Math.random() * (canvas.height-300),
-                    w: 58, h: 72,
-                    baseSpeed: 1.2 + Math.random() * 2.2,
+                    y: 120 + Math.random() * (canvas.height-300),
+                    w: 68, h: 82,
+                    baseSpeed: 1.2 + Math.random() * 2.0,
                     passed: false
                 });
             }
             laps=0; overtakes=0; finishCrossed=false;
-            player.y = canvas.height-100; player.x = canvas.width/2-30; player.speed=0; player.fuel=100; player.tireWear=0;
+            player.y = canvas.height-110; player.x = canvas.width/2-35; player.speed=0;
             gas=false; brake=false; left=false; right=false;
             currentPosition=8;
             updatePhysicsParams();
-            document.getElementById('lapCount').innerText='0'; document.getElementById('overtakesCount').innerText='0'; document.getElementById('positionText').innerText='P8'; document.getElementById('speedDisplay').innerText='0';
-            document.getElementById('raceMessage').innerHTML = '🏎️ SIMULATOR READY · PRESS GAS ↑';
+            document.getElementById('lapCount').innerText='0';
+            document.getElementById('overtakesCount').innerText='0';
+            document.getElementById('positionText').innerText='P8';
+            document.getElementById('speedDisplay').innerText='0';
+            document.getElementById('raceMessage').innerHTML = '🏎️ CIRCUIT READY · PRESS GAS ↑';
         }
         
         function updatePosition() {
-            let ahead = opponents.filter(o => o.y < player.y - 25).length;
+            let ahead = opponents.filter(o => o.y < player.y - 30).length;
             currentPosition = Math.min(ahead+1,8);
             document.getElementById('positionText').innerText = `P${currentPosition}`;
         }
@@ -195,7 +250,6 @@
         function updateGame() {
             if(!raceActive) return;
             updatePhysicsParams();
-            const track = document.getElementById('trackSelect').value;
             
             if(gas) { player.speed += 0.55 * grip; if(player.speed > currentMaxSpeed) player.speed = currentMaxSpeed; }
             if(brake) { player.speed *= 0.85; if(player.speed<0) player.speed=0; }
@@ -204,33 +258,37 @@
             
             let move = player.speed * 2.8;
             player.y -= move;
-            if(player.y < FINISH_Y+20) player.y = FINISH_Y+20;
-            if(player.y > canvas.height-85) player.y = canvas.height-85;
+            if(player.y < FINISH_Y+25) player.y = FINISH_Y+25;
+            if(player.y > canvas.height-100) player.y = canvas.height-100;
             
             if(left) player.x -= 7;
             if(right) player.x += 7;
-            if(player.x < 90) player.x = 90;
-            if(player.x > canvas.width-player.width-90) player.x = canvas.width-player.width-90;
+            if(player.x < 80) player.x = 80;
+            if(player.x > canvas.width-player.width-80) player.x = canvas.width-player.width-80;
             
             for(let o of opponents) {
-                let spd = o.baseSpeed * (0.7 + Math.random()*0.9);
+                let spd = o.baseSpeed * (0.75 + Math.random()*0.9);
                 o.y -= spd;
-                if(o.y+o.h < FINISH_Y) { o.y = canvas.height-90; o.x = 100+Math.random()*(canvas.width-200); o.passed=false; }
-                if(o.y+o.h < FINISH_Y+15 && !o.passed) o.passed=true;
+                if(o.y+o.h < FINISH_Y) {
+                    o.y = canvas.height-90;
+                    o.x = 100 + Math.random() * (canvas.width-200);
+                    o.passed = false;
+                }
+                if(o.y+o.h < FINISH_Y+20 && !o.passed) o.passed=true;
             }
             
             for(let o of opponents) {
                 if(player.x < o.x+o.w && player.x+player.width > o.x && player.y < o.y+o.h && player.y+player.height > o.y) {
-                    player.speed = Math.max(0, player.speed-5);
-                    player.y += 20;
-                    if(player.y>canvas.height-85) player.y=canvas.height-85;
+                    player.speed = Math.max(0, player.speed-5.5);
+                    player.y += 25;
+                    if(player.y>canvas.height-100) player.y=canvas.height-100;
                     document.getElementById('raceMessage').innerHTML = '💥 CRASH! LOST SPEED 💥';
                     setTimeout(()=>{ if(raceActive) document.getElementById('raceMessage').innerHTML='🏁 RACING 🏁'; },600);
                 }
             }
             
             for(let o of opponents) {
-                if(!o.passed && player.y+player.height < o.y+12 && player.y < o.y && Math.abs(player.x-o.x)<55) {
+                if(!o.passed && player.y+player.height < o.y+15 && player.y < o.y && Math.abs(player.x - o.x) < 55) {
                     o.passed=true; overtakes++;
                     document.getElementById('overtakesCount').innerText = overtakes;
                     document.getElementById('raceMessage').innerHTML = '✅ OVERTAKE! ✅';
@@ -238,11 +296,11 @@
                 }
             }
             
-            if(player.y+player.height < FINISH_Y+12 && !finishCrossed) {
+            if(player.y+player.height < FINISH_Y+15 && !finishCrossed) {
                 finishCrossed=true; laps++;
                 document.getElementById('lapCount').innerText = laps;
-                document.getElementById('raceMessage').innerHTML = `🏁 LAP ${laps}/5 🏁`;
-                if(laps>=5) {
+                document.getElementById('raceMessage').innerHTML = `🏁 LAP ${laps}/6 🏁`;
+                if(laps>=6) {
                     raceActive=false;
                     const driver = document.getElementById('racingDriver').value;
                     let msg = '';
@@ -253,24 +311,18 @@
                     if(animFrame) cancelAnimationFrame(animFrame);
                     return;
                 }
-                setTimeout(()=>{ finishCrossed=false; },700);
+                setTimeout(()=>{ finishCrossed=false; },800);
             }
-            if(player.y+player.height > FINISH_Y+45) finishCrossed=false;
+            if(player.y+player.height > FINISH_Y+50) finishCrossed=false;
             
             updatePosition();
             document.getElementById('speedDisplay').innerText = Math.floor(player.speed * 13);
             
             drawTrackBackground();
-            for(let o of opponents) {
-                ctx.fillStyle = '#4a5568'; ctx.fillRect(o.x, o.y, o.w, o.h);
-                ctx.fillStyle = '#2d3748'; ctx.fillRect(o.x+10, o.y+12, o.w-20, 16);
-                ctx.fillStyle = '#a0aec0'; ctx.fillRect(o.x+15, o.y+40, 10, 18); ctx.fillRect(o.x+o.w-25, o.y+40, 10, 18);
-            }
+            for(let o of opponents) drawOpponentCar(o.x, o.y, o.w, o.h);
             const driverName = document.getElementById('racingDriver').value;
-            ctx.fillStyle = getDriverColor(driverName); ctx.fillRect(player.x, player.y, player.width, player.height);
-            ctx.fillStyle = '#111'; ctx.fillRect(player.x+15, player.y+15, 12, 18); ctx.fillRect(player.x+player.width-27, player.y+15, 12, 18);
-            ctx.fillStyle = '#fff'; ctx.font = 'bold 12px monospace'; ctx.fillText(driverName.split(' ')[0], player.x+12, player.y-6);
-            drawWeatherOverlay();
+            drawF1Car(player.x, player.y, player.width, player.height, getDriverColor(driverName));
+            drawWeather();
             
             animFrame = requestAnimationFrame(updateGame);
         }
@@ -288,11 +340,11 @@
             updateGame();
         };
         
-        canvas.width = 900; canvas.height = 750;
+        canvas.width = 1000; canvas.height = 700;
         initRace();
     }, 'gameRacing');
 
-    // ОСТАЛЬНЫЕ МИНИ-ИГРЫ (14 штук – сокращённо, но все рабочие)
+    // ОСТАЛЬНЫЕ 14 МИНИ-ИГР (КОРОТКО, НО ПОЛНОСТЬЮ РАБОЧИЕ)
     const miniGames = [
         { title: '⏱️ REACTION PIT STOP', fn: (c) => { c.innerHTML = `<div>Click when light turns GREEN</div><div id="pitStatus" style="margin:12px 0;font-size:20px;font-weight:800;">🔴 WAITING</div><button id="pitBtn">START</button><div id="pitResult" class="game-stats"></div>`;
             let pitTimer=null, pitStart=null, pitActive=false;
