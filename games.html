@@ -435,4 +435,50 @@
         const tempValue=document.getElementById('tempValue'), tempResult=document.getElementById('tempResult'), tempStartBtn=document.getElementById('tempStartBtn');
         function updateTarget(){ target=Math.floor(Math.random()*1000); tempValue.innerText=`${target}°`; }
         tempStartBtn.onclick=()=>{ updateTarget(); tempResult.innerHTML=''; score=0; };
-        document.getElementById('tempSlider').onclick=(e)=>{ const rect=e
+        document.getElementById('tempSlider').onclick=(e)=>{ const rect=e.currentTarget.getBoundingClientRect(); const x=e.clientX-rect.left; const percent=x/rect.width; const clickVal=Math.floor(percent*1000); const diff=Math.abs(clickVal-target); const points=Math.max(0,500-diff); score+=points; tempResult.innerHTML=`+${points} (total ${score})`; updateTarget(); };
+        updateTarget();
+    },'game10');
+    createGameCard('⛽ FUEL SAVING', (cont) => {
+        cont.innerHTML = `<div>Click when fuel ≤ 50 (0–100)</div><div id="fuelValue" class="big-number">50</div><button id="fuelStartBtn">NEW LAP</button><div id="fuelResult" class="game-stats"></div>`;
+        let fuel=50, active=true, interval=null;
+        const fuelValue=document.getElementById('fuelValue'), fuelResult=document.getElementById('fuelResult'), fuelStartBtn=document.getElementById('fuelStartBtn');
+        function startFuel(){ if(interval) clearInterval(interval); active=true; fuel=Math.floor(Math.random()*80)+20; fuelValue.innerText=fuel; interval=setInterval(()=>{ if(active && fuel>0){ fuel--; fuelValue.innerText=fuel; } },200); }
+        fuelStartBtn.onclick=()=>{ startFuel(); fuelResult.innerHTML=''; };
+        document.addEventListener('click',()=>{ if(active && fuel<=50){ fuelResult.innerHTML='✅ PERFECT SAVING! +1 LAP'; active=false; if(interval) clearInterval(interval); } else if(active){ fuelResult.innerHTML='❌ TOO EARLY! FUEL WASTED'; active=false; if(interval) clearInterval(interval); } });
+        startFuel();
+    },'game11');
+    createGameCard('🕒 PIT WINDOW', (cont) => {
+        cont.innerHTML = `<div>Click when timer between 10–20</div><div id="pitTimer" class="big-number">0</div><button id="pitWindowStart">RESET</button><div id="pitWindowResult" class="game-stats"></div>`;
+        let time=0, running=true, interval=null;
+        const pitTimer=document.getElementById('pitTimer'), pitWindowResult=document.getElementById('pitWindowResult'), pitWindowStart=document.getElementById('pitWindowStart');
+        function resetTimer(){ if(interval) clearInterval(interval); time=0; running=true; pitTimer.innerText='0'; interval=setInterval(()=>{ if(running){ time+=0.1; pitTimer.innerText=time.toFixed(1); } },100); }
+        pitWindowStart.onclick=()=>{ resetTimer(); pitWindowResult.innerHTML=''; };
+        document.addEventListener('click',()=>{ if(running){ const t=parseFloat(pitTimer.innerText); if(t>=10 && t<=20){ pitWindowResult.innerHTML=`✅ PERFECT PIT! (${t.toFixed(1)}s)`; running=false; clearInterval(interval); } else { pitWindowResult.innerHTML=`❌ BAD WINDOW (${t.toFixed(1)}s)`; running=false; clearInterval(interval); } } });
+        resetTimer();
+    },'game12');
+    createGameCard('🚥 GRID START', (cont) => {
+        cont.innerHTML = `<div>Click when lights go OUT</div><div id="lights" style="font-size:28px;">🔴🔴🔴🔴🔴</div><button id="gridStartBtn">RESTART</button><div id="gridResult" class="game-stats"></div>`;
+        let active=false, startTime=null, timeout=null;
+        const lights=document.getElementById('lights'), gridResult=document.getElementById('gridResult'), gridStartBtn=document.getElementById('gridStartBtn');
+        function startLights(){ if(timeout) clearTimeout(timeout); active=true; startTime=null; let count=0; lights.innerHTML='🔴🔴🔴🔴🔴'; const int=setInterval(()=>{ if(count<4){ lights.innerHTML=lights.innerHTML.slice(0,-2); count++; } else { clearInterval(int); const delay=Math.random()*3000+500; timeout=setTimeout(()=>{ if(active){ lights.innerHTML='⚫⚫⚫⚫⚫'; startTime=Date.now(); } },delay); } },800); }
+        gridStartBtn.onclick=()=>{ startLights(); gridResult.innerHTML=''; };
+        document.addEventListener('click',(e)=>{ if(active && startTime && e.target!==gridStartBtn){ const react=Date.now()-startTime; gridResult.innerHTML=`✅ ${react} ms`; active=false; if(timeout) clearTimeout(timeout); } });
+        startLights();
+    },'game13');
+    createGameCard('🚨 SAFETY CAR', (cont) => {
+        cont.innerHTML = `<div>Guess safety car number (1–20)</div><input id="scGuess" type="number" min="1" max="20"><button id="scCheckBtn">GUESS</button><div id="scResult" class="game-stats"></div>`;
+        let secret=Math.floor(Math.random()*20)+1;
+        const scResult=document.getElementById('scResult'), scGuess=document.getElementById('scGuess'), scCheckBtn=document.getElementById('scCheckBtn');
+        scCheckBtn.onclick=()=>{ const guess=parseInt(scGuess.value); if(guess===secret){ scResult.innerHTML='✅ YOU CAUGHT THE SAFETY CAR!'; secret=Math.floor(Math.random()*20)+1; } else { scResult.innerHTML=`❌ WRONG → it was ${secret}`; secret=Math.floor(Math.random()*20)+1; } scGuess.value=''; };
+    },'game14');
+    createGameCard('💨 FASTEST LAP', (cont) => {
+        cont.innerHTML = `<div>Which colour is fastest? (red/blue/silver)</div><div class="flex-buttons"><button id="colorRed">RED</button><button id="colorBlue">BLUE</button><button id="colorSilver">SILVER</button></div><div id="colorResult" class="game-stats"></div>`;
+        const colorResult=document.getElementById('colorResult');
+        const check=(c)=>{ const correct='red'; colorResult.innerHTML=(c===correct)?'✅ FASTEST LAP! +1':'❌ WRONG, red bull is red'; };
+        document.getElementById('colorRed').onclick=()=>check('red');
+        document.getElementById('colorBlue').onclick=()=>check('blue');
+        document.getElementById('colorSilver').onclick=()=>check('silver');
+    },'game15');
+</script>
+</body>
+</html>
