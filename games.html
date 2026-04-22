@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>F1 CIRCUIT SIMULATOR · VISIBLE LAP</title>
+    <title>F1 CIRCUIT RACING · REAL CORNERS</title>
     <link rel="stylesheet" href="style.css">
     <style>
         * { user-select: none; -webkit-tap-highlight-color: transparent; }
@@ -18,9 +18,8 @@
         .race-canvas-container { background: #000; border-radius: 12px; padding: 8px; margin: 12px 0; border: 1px solid #ff003c; }
         canvas { display: block; margin: 0 auto; background: #0a0f1a; border-radius: 8px; width: 100%; height: auto; cursor: none; }
         .race-controls { display: flex; gap: 12px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
-        .race-controls button { margin-top: 0; padding: 10px 20px; font-size: 16px; min-width: 80px; }
+        .race-controls button { margin-top: 0; padding: 10px 20px; font-size: 16px; min-width: 70px; }
         .sim-panel { background: #0b0e14; border: 1px solid #ff003c; padding: 12px; margin: 12px 0; border-radius: 8px; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; }
-        .sim-panel label { font-size: 12px; color: #b0c4de; }
         .track-radar { background: #0a0f1a; border: 1px solid #ff003c; border-radius: 100px; padding: 6px 12px; margin-top: 8px; display: flex; align-items: center; gap: 8px; font-size: 11px; }
         .radar-dot { width: 12px; height: 12px; background: #e10600; border-radius: 50%; transition: 0.1s; }
         @media (max-width: 700px) { .race-controls button { padding: 6px 12px; font-size: 12px; min-width: 60px; } }
@@ -36,9 +35,9 @@
         <a href="news.html">NEWS</a>
         <a href="games.html" class="active">SIMULATOR</a>
     </div>
-    <h1>🏁 F1 CIRCUIT SIMULATOR · VISIBLE LAP</h1>
+    <h1>🏁 F1 CIRCUIT · REAL CORNERS & LAP TRACKER</h1>
     <div class="games-grid" id="gamesGrid"></div>
-    <div class="footer">⚡ GAS / BRAKE / STEERING · TRACK RADAR · REAL CIRCUIT LAYOUT</div>
+    <div class="footer">⚡ GAS / BRAKE / TURN LEFT/RIGHT · VISIBLE LAP POSITION</div>
 </div>
 
 <script>
@@ -53,8 +52,8 @@
         if (container) contentFn(container);
     }
 
-    // ========== КОЛЬЦЕВАЯ ТРАССА С ВИДИМЫМ КРУГОМ ==========
-    createGameCard('🏎️ F1 CIRCUIT · TRACK RADAR', (cont) => {
+    // ========== КОЛЬЦЕВАЯ ГОНКА С ПОВОРОТАМИ ==========
+    createGameCard('🏎️ CIRCUIT RACING · CORNERS', (cont) => {
         cont.innerHTML = `
             <div style="display:flex; gap:12px; flex-wrap:wrap; justify-content:space-between;">
                 <select id="racingDriver" style="width:48%;">
@@ -65,20 +64,17 @@
                     <option value="George Russell">George Russell (Mercedes)</option>
                 </select>
                 <select id="trackSelect" style="width:48%;">
-                    <option value="monaco">🇲🇨 MONACO</option>
-                    <option value="monza">🇮🇹 MONZA</option>
+                    <option value="monaco">🇲🇨 MONACO (tight)</option>
+                    <option value="monza">🇮🇹 MONZA (fast)</option>
                     <option value="silverstone">🇬🇧 SILVERSTONE</option>
-                    <option value="spa">🇧🇪 SPA</option>
-                    <option value="baku">🇦🇿 BAKU</option>
                 </select>
             </div>
             <div class="sim-panel">
                 <label>🌧️ WEATHER: <select id="weatherSelect"><option value="sunny">☀️ SUNNY</option><option value="rain">🌧️ RAIN</option><option value="night">🌙 NIGHT</option></select></label>
-                <label>🏎️ DOWNFORCE: <input type="range" id="downforceSlider" min="0" max="100" value="65" style="width:120px;"></label>
-                <label>⚙️ TRACTION: <input type="range" id="tractionSlider" min="0" max="100" value="70" style="width:120px;"></label>
+                <label>🏎️ GRIP: <input type="range" id="gripSlider" min="0" max="100" value="70" style="width:120px;"></label>
             </div>
             <div class="race-canvas-container">
-                <canvas id="raceCanvas" width="1000" height="650" style="width:100%; height:auto; max-width:1000px; aspect-ratio:1000/650"></canvas>
+                <canvas id="raceCanvas" width="900" height="600" style="width:100%; height:auto; max-width:900px; aspect-ratio:900/600"></canvas>
             </div>
             <div class="track-radar">
                 <span>🗺️ TRACK POSITION:</span>
@@ -88,12 +84,12 @@
             <div class="race-controls">
                 <button id="gasBtn">⚡ GAS (↑)</button>
                 <button id="brakeBtn">🛑 BRAKE (↓)</button>
-                <button id="leftBtn">◀ LEFT</button>
-                <button id="rightBtn">RIGHT ▶</button>
+                <button id="leftTurnBtn">↶ LEFT (←)</button>
+                <button id="rightTurnBtn">↷ RIGHT (→)</button>
             </div>
             <div id="raceInfo" style="font-family:monospace; margin-top:12px; display:flex; justify-content:space-between; flex-wrap:wrap;">
-                <span>🏁 LAPS: <span id="lapCount">0</span>/6</span>
-                <span>🏆 POS: <span id="positionText">P8</span></span>
+                <span>🏁 LAPS: <span id="lapCount">0</span>/5</span>
+                <span>🏆 POS: <span id="positionText">P6</span></span>
                 <span>⚡ OVERTAKES: <span id="overtakesCount">0</span></span>
                 <span>🏎️ SPEED: <span id="speedDisplay">0</span> km/h</span>
                 <span>🛞 GRIP: <span id="gripDisplay">100</span>%</span>
@@ -107,112 +103,90 @@
         let animFrame = null;
         let raceActive = false;
         
-        // Позиция на трассе (0-1) – прогресс круга
-        let trackProgress = 0;
+        // Прогресс по кругу (0..1)
+        let lapProgress = 0;
+        let laps = 0, overtakes = 0;
+        let currentPosition = 6;
+        let speed = 0;
         let lastProgress = 0;
         
-        // Игрок
-        let player = { x: canvas.width/2 - 35, y: canvas.height - 110, width: 70, height: 85, speed: 0 };
-        const MAX_SPEED_BASE = 22;
-        let currentMaxSpeed = MAX_SPEED_BASE;
-        let grip = 1.0;
-        
+        // Соперники
         let opponents = [];
-        let laps = 0, overtakes = 0;
-        let currentPosition = 8;
+        for(let i=0;i<5;i++) {
+            opponents.push({ progress: Math.random() * 0.9, speed: 1.2 + Math.random() * 1.5, overtaken: false });
+        }
         
-        // Физика движения по кругу
-        let gas = false, brake = false, left = false, right = false;
+        // Параметры
+        let grip = 1.0;
+        let baseGrip = 0.7;
+        let turnIntensity = 0;
         
-        function updatePhysicsParams() {
+        // Управление
+        let gas = false, brake = false, turnLeft = false, turnRight = false;
+        
+        const TRACK_LENGTH = 5.2; // условная длина круга
+        const MAX_SPEED = 280;
+        const MIN_SPEED = 60;
+        
+        function updateGrip() {
             const weather = document.getElementById('weatherSelect').value;
-            const downforce = parseInt(document.getElementById('downforceSlider').value) / 100;
-            const traction = parseInt(document.getElementById('tractionSlider').value) / 100;
-            let gripBase = weather === 'rain' ? 0.6 : (weather === 'night' ? 0.85 : 1.0);
-            grip = gripBase * (0.7 + downforce * 0.3) * (0.7 + traction * 0.3);
-            currentMaxSpeed = MAX_SPEED_BASE * (0.8 + downforce * 0.25);
+            let weatherGrip = weather === 'rain' ? 0.6 : (weather === 'night' ? 0.85 : 1.0);
+            let sliderGrip = parseInt(document.getElementById('gripSlider').value) / 100;
+            grip = weatherGrip * (0.5 + sliderGrip * 0.5);
             document.getElementById('gripDisplay').innerText = Math.floor(grip * 100);
         }
         
-        function drawF1Car(x, y, w, h, color) {
-            ctx.fillStyle = color;
-            ctx.fillRect(x, y, w, h);
-            ctx.fillStyle = '#222';
-            ctx.fillRect(x+5, y-8, 20, 8);
-            ctx.fillRect(x+w-25, y-8, 20, 8);
-            ctx.fillRect(x+10, y+h-6, w-20, 8);
-            ctx.fillStyle = '#1a1a2e';
-            ctx.fillRect(x+20, y+15, 30, 20);
-            ctx.fillStyle = '#111';
-            ctx.fillRect(x-5, y+15, 8, 20);
-            ctx.fillRect(x-5, y+h-35, 8, 20);
-            ctx.fillRect(x+w-3, y+15, 8, 20);
-            ctx.fillRect(x+w-3, y+h-35, 8, 20);
-            ctx.fillStyle = '#444';
-            ctx.fillRect(x+30, y+5, 10, 10);
-            ctx.fillStyle = '#888';
-            ctx.fillRect(x+15, y+12, 40, 5);
-        }
-        
-        function drawOpponentCar(x, y, w, h) {
-            ctx.fillStyle = '#4a5568';
-            ctx.fillRect(x, y, w, h);
-            ctx.fillStyle = '#2d3748';
-            ctx.fillRect(x+10, y+12, w-20, 16);
-            ctx.fillStyle = '#a0aec0';
-            ctx.fillRect(x+15, y+40, 10, 18);
-            ctx.fillRect(x+w-25, y+40, 10, 18);
-            ctx.fillStyle = '#333';
-            ctx.fillRect(x-4, y+18, 6, 18);
-            ctx.fillRect(x-4, y+h-30, 6, 18);
-            ctx.fillRect(x+w-2, y+18, 6, 18);
-            ctx.fillRect(x+w-2, y+h-30, 6, 18);
-        }
-        
-        function drawCircuit() {
+        function drawTrack() {
             const track = document.getElementById('trackSelect').value;
-            const grad = ctx.createLinearGradient(0,0,0,canvas.height);
-            if(track==='monaco') grad.addColorStop(0,'#1a2a3a');
-            else if(track==='monza') grad.addColorStop(0,'#1a3a1a');
-            else if(track==='silverstone') grad.addColorStop(0,'#2a2a3a');
-            else if(track==='spa') grad.addColorStop(0,'#2a3a2a');
-            else grad.addColorStop(0,'#3a2a1a');
-            ctx.fillStyle = grad; ctx.fillRect(0,0,canvas.width,canvas.height);
-            // Асфальт
-            ctx.fillStyle = '#1a1f2c';
+            ctx.fillStyle = '#0a1a2a';
             ctx.fillRect(0,0,canvas.width,canvas.height);
-            ctx.fillStyle = '#2a2f3a';
-            ctx.fillRect(60,0,canvas.width-120,canvas.height);
-            // Разметка трассы (пунктир)
+            // Асфальт
+            ctx.fillStyle = '#1a2a3a';
+            ctx.fillRect(50,0,canvas.width-100,canvas.height);
+            // Разметка
             for(let i=0;i<25;i++) {
                 ctx.fillStyle = i%2===0 ? '#ff003c' : '#fff';
-                ctx.fillRect(canvas.width/2-15, 30 + i*35, 30, 8);
+                ctx.fillRect(canvas.width/2-12, 30 + i*35, 24, 8);
             }
-            // Линия финиша
+            // Старт-финиш
             ctx.fillStyle = '#ff003c';
-            ctx.fillRect(0, 60, canvas.width, 8);
+            ctx.fillRect(0, 70, canvas.width, 8);
             ctx.fillStyle = '#fff';
-            ctx.font = 'bold 16px monospace';
-            ctx.fillText('START/FINISH', canvas.width/2-70, 52);
+            ctx.font = 'bold 14px monospace';
+            ctx.fillText('START/FINISH', canvas.width/2-50, 65);
+            // Название трассы
+            ctx.fillStyle = '#ccc';
+            ctx.font = 'italic 12px monospace';
+            if(track==='monaco') ctx.fillText('MONACO · tight corners', 20, 30);
+            else if(track==='monza') ctx.fillText('MONZA · high speed', 20, 30);
+            else ctx.fillText('SILVERSTONE · flowing', 20, 30);
         }
         
-        function drawWeather() {
-            const weather = document.getElementById('weatherSelect').value;
-            if(weather === 'rain') {
-                ctx.fillStyle = 'rgba(100,150,200,0.25)';
-                ctx.fillRect(0,0,canvas.width,canvas.height);
-                for(let i=0;i<200;i++) {
-                    ctx.fillStyle = '#aaf';
-                    ctx.fillRect(10+Math.random()*canvas.width, Math.random()*canvas.height, 2, 6);
-                }
-            } else if(weather === 'night') {
-                ctx.fillStyle = 'rgba(0,0,50,0.6)';
-                ctx.fillRect(0,0,canvas.width,canvas.height);
-                for(let i=0;i<120;i++) {
-                    ctx.fillStyle = '#ffa';
-                    ctx.beginPath(); ctx.arc(20+Math.random()*canvas.width, 20+Math.random()*canvas.height, 2,0,Math.PI*2); ctx.fill();
-                }
-            }
+        function drawCar(x, y, color) {
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, 50, 70);
+            ctx.fillStyle = '#222';
+            ctx.fillRect(x+8, y-6, 15, 6);
+            ctx.fillRect(x+27, y-6, 15, 6);
+            ctx.fillStyle = '#111';
+            ctx.fillRect(x-4, y+15, 6, 20);
+            ctx.fillRect(x-4, y+45, 6, 20);
+            ctx.fillRect(x+48, y+15, 6, 20);
+            ctx.fillRect(x+48, y+45, 6, 20);
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(x+15, y+15, 20, 18);
+            ctx.fillStyle = '#888';
+            ctx.fillRect(x+12, y+12, 26, 4);
+        }
+        
+        function drawOpponent(x, y) {
+            ctx.fillStyle = '#4a5568';
+            ctx.fillRect(x, y, 50, 70);
+            ctx.fillStyle = '#2d3748';
+            ctx.fillRect(x+10, y+15, 30, 18);
+            ctx.fillStyle = '#a0aec0';
+            ctx.fillRect(x+12, y+45, 8, 15);
+            ctx.fillRect(x+30, y+45, 8, 15);
         }
         
         function getDriverColor(name) {
@@ -222,151 +196,143 @@
             return '#ccc';
         }
         
-        function initRace() {
-            opponents = [];
-            for(let i=0;i<7;i++) {
-                opponents.push({
-                    x: 100 + Math.random() * (canvas.width-200),
-                    y: 100 + Math.random() * (canvas.height-250),
-                    w: 68, h: 82,
-                    baseSpeed: 1.0 + Math.random() * 1.8,
-                    progress: Math.random() * 0.9
-                });
-            }
-            laps=0; overtakes=0;
-            trackProgress = 0;
-            lastProgress = 0;
-            player.y = canvas.height-110;
-            player.x = canvas.width/2-35;
-            player.speed = 0;
-            gas=false; brake=false; left=false; right=false;
-            currentPosition=8;
-            updatePhysicsParams();
-            document.getElementById('lapCount').innerText='0';
-            document.getElementById('overtakesCount').innerText='0';
-            document.getElementById('positionText').innerText='P8';
-            document.getElementById('speedDisplay').innerText='0';
-            document.getElementById('lapProgress').innerText='0%';
-            document.getElementById('radarDot').style.marginLeft = '0%';
-            document.getElementById('raceMessage').innerHTML = '🏁 CIRCUIT READY · PRESS GAS ↑';
-        }
-        
         function updatePosition() {
-            let ahead = opponents.filter(o => o.progress > trackProgress).length;
-            currentPosition = Math.min(ahead+1,8);
+            let ahead = opponents.filter(o => o.progress > lapProgress).length;
+            currentPosition = Math.min(ahead+1,6);
             document.getElementById('positionText').innerText = `P${currentPosition}`;
         }
         
         function updateGame() {
             if(!raceActive) return;
-            updatePhysicsParams();
+            updateGrip();
             
-            if(gas) { player.speed += 0.55 * grip; if(player.speed > currentMaxSpeed) player.speed = currentMaxSpeed; }
-            if(brake) { player.speed *= 0.85; if(player.speed<0) player.speed=0; }
-            player.speed *= 0.98;
-            if(player.speed<0.05 && !gas && !brake) player.speed=0;
+            // Физика газа и тормоза
+            if(gas) { speed += 12 * grip; if(speed > MAX_SPEED) speed = MAX_SPEED; }
+            if(brake) { speed -= 18; if(speed < MIN_SPEED) speed = MIN_SPEED; }
+            speed *= 0.99;
+            if(speed < 5 && !gas && !brake) speed = 0;
             
-            // Движение по кругу – увеличиваем прогресс
-            let delta = player.speed * 0.008;
-            trackProgress += delta;
-            if(trackProgress >= 1.0) {
-                trackProgress = 0;
+            // Повороты
+            let turnFactor = 0;
+            if(turnLeft) turnFactor = -0.9;
+            if(turnRight) turnFactor = 0.9;
+            // Влияние поворота на прогресс: в поворотах скорость падает
+            let cornerEffect = Math.abs(turnFactor) * 0.4;
+            let delta = (speed / MAX_SPEED) * 0.012 * (1 - cornerEffect * 0.5);
+            lapProgress += delta;
+            
+            // Проверка прохождения круга
+            if(lapProgress >= 1.0) {
+                lapProgress = 0;
                 laps++;
                 document.getElementById('lapCount').innerText = laps;
-                document.getElementById('raceMessage').innerHTML = `🏁 LAP ${laps}/6 🏁`;
-                if(laps >= 6) {
-                    raceActive=false;
+                document.getElementById('raceMessage').innerHTML = `🏁 LAP ${laps}/5 COMPLETE 🏁`;
+                if(laps >= 5) {
+                    raceActive = false;
                     const driver = document.getElementById('racingDriver').value;
-                    let msg = '';
-                    if(currentPosition===1) msg = `🏆 VICTORY! ${driver} WINS! ${overtakes} OVERTAKES 🏆`;
-                    else if(currentPosition<=3) msg = `🎉 PODIUM! ${driver} P${currentPosition} · ${overtakes} OVERTAKES 🎉`;
-                    else msg = `🏁 FINISHED: ${driver} P${currentPosition} · OVERTAKES: ${overtakes} 🏁`;
+                    let msg = currentPosition===1 ? `🏆 VICTORY! ${driver} WINS! ${overtakes} OVERTAKES 🏆` : 
+                               (currentPosition<=3 ? `🎉 PODIUM! ${driver} P${currentPosition} 🎉` : 
+                               `🏁 FINISHED: ${driver} P${currentPosition} · OVERTAKES: ${overtakes} 🏁`);
                     document.getElementById('raceMessage').innerHTML = msg;
                     if(animFrame) cancelAnimationFrame(animFrame);
                     return;
                 }
             }
-            // Визуальная позиция на экране зависит от прогресса
-            let visualY = canvas.height - 110 - (trackProgress * 600);
-            if(visualY < 80) visualY = 80;
-            if(visualY > canvas.height-110) visualY = canvas.height-110;
-            player.y = visualY;
             
-            // Управление по горизонтали
-            if(left) player.x -= 7;
-            if(right) player.x += 7;
-            if(player.x < 70) player.x = 70;
-            if(player.x > canvas.width-player.width-70) player.x = canvas.width-player.width-70;
-            
-            // Соперники двигаются по прогрессу
-            for(let o of opponents) {
-                o.progress += o.baseSpeed * 0.008;
-                if(o.progress >= 1.0) {
-                    o.progress = 0;
-                    o.x = 100 + Math.random() * (canvas.width-200);
-                }
-                let oppY = canvas.height - 110 - (o.progress * 600);
-                if(oppY < 80) oppY = 80;
-                if(oppY > canvas.height-110) oppY = canvas.height-110;
-                o.y = oppY;
+            // Движение соперников
+            for(let opp of opponents) {
+                opp.progress += (opp.speed / MAX_SPEED) * 0.012;
+                if(opp.progress >= 1.0) opp.progress = 0;
             }
             
             // Обгоны
-            for(let o of opponents) {
-                if(Math.abs(player.x - o.x) < 60 && Math.abs(player.y - o.y) < 40 && trackProgress > o.progress + 0.02) {
+            for(let opp of opponents) {
+                if(!opp.overtaken && lapProgress > opp.progress + 0.03) {
+                    opp.overtaken = true;
                     overtakes++;
                     document.getElementById('overtakesCount').innerText = overtakes;
                     document.getElementById('raceMessage').innerHTML = '✅ OVERTAKE! ✅';
                     setTimeout(()=>{ if(raceActive) document.getElementById('raceMessage').innerHTML='🏁 RACING 🏁'; },400);
-                    // сдвигаем соперника назад, чтобы не спамило обгонами
-                    o.progress = trackProgress - 0.05;
-                    if(o.progress < 0) o.progress = 0;
                 }
+                if(opp.progress > lapProgress) opp.overtaken = false;
             }
             
-            // Столкновения
-            for(let o of opponents) {
-                if(Math.abs(player.x - o.x) < 50 && Math.abs(player.y - o.y) < 35 && trackProgress < o.progress + 0.05 && trackProgress > o.progress - 0.05) {
-                    player.speed = Math.max(0, player.speed-4);
-                    document.getElementById('raceMessage').innerHTML = '💥 CRASH! 💥';
-                    setTimeout(()=>{ if(raceActive) document.getElementById('raceMessage').innerHTML='🏁 RACING 🏁'; },500);
-                }
+            // Потеря управления при слишком резком повороте на скорости
+            if((turnLeft || turnRight) && speed > 180) {
+                let loss = (speed / MAX_SPEED) * 0.5;
+                speed -= loss * 15;
+                if(speed < MIN_SPEED) speed = MIN_SPEED;
+                document.getElementById('raceMessage').innerHTML = '⚠️ UNDERSTEER! LOST SPEED ⚠️';
+                setTimeout(()=>{ if(raceActive && document.getElementById('raceMessage').innerHTML.includes('UNDERSTEER')) 
+                    document.getElementById('raceMessage').innerHTML='🏁 RACING 🏁'; },500);
             }
             
             updatePosition();
-            document.getElementById('speedDisplay').innerText = Math.floor(player.speed * 13);
-            let percent = Math.floor(trackProgress * 100);
+            document.getElementById('speedDisplay').innerText = Math.floor(speed);
+            let percent = Math.floor(lapProgress * 100);
             document.getElementById('lapProgress').innerText = `${percent}%`;
-            let radarPos = (trackProgress * 80) + 10;
+            let radarPos = (lapProgress * 80) + 10;
             document.getElementById('radarDot').style.marginLeft = `${radarPos}%`;
             
-            drawCircuit();
-            for(let o of opponents) drawOpponentCar(o.x, o.y, o.w, o.h);
+            // Отрисовка
+            drawTrack();
+            
+            // Позиция "камеры" – визуализация: соперники выше/ниже в зависимости от прогресса
+            let myY = 400 - (lapProgress * 350);
+            if(myY < 80) myY = 80;
+            if(myY > 450) myY = 450;
+            
+            for(let opp of opponents) {
+                let oppY = 400 - (opp.progress * 350);
+                if(oppY < 80) oppY = 80;
+                if(oppY > 450) oppY = 450;
+                drawOpponent(150 + (opp.progress * 70), oppY);
+            }
+            
             const driverName = document.getElementById('racingDriver').value;
-            drawF1Car(player.x, player.y, player.width, player.height, getDriverColor(driverName));
-            drawWeather();
+            drawCar(180, myY, getDriverColor(driverName));
+            
+            // Погода
+            const weather = document.getElementById('weatherSelect').value;
+            if(weather === 'rain') {
+                ctx.fillStyle = 'rgba(100,150,200,0.2)';
+                ctx.fillRect(0,0,canvas.width,canvas.height);
+                for(let i=0;i<150;i++) { ctx.fillStyle = '#aaf'; ctx.fillRect(10+Math.random()*canvas.width, Math.random()*canvas.height, 2, 6); }
+            } else if(weather === 'night') {
+                ctx.fillStyle = 'rgba(0,0,50,0.5)';
+                ctx.fillRect(0,0,canvas.width,canvas.height);
+                for(let i=0;i<80;i++) { ctx.fillStyle = '#ffa'; ctx.beginPath(); ctx.arc(20+Math.random()*canvas.width, 20+Math.random()*canvas.height, 2,0,Math.PI*2); ctx.fill(); }
+            }
             
             animFrame = requestAnimationFrame(updateGame);
         }
         
-        const gasBtn = document.getElementById('gasBtn'), brakeBtn = document.getElementById('brakeBtn'), leftBtn = document.getElementById('leftBtn'), rightBtn = document.getElementById('rightBtn');
-        gasBtn.onmousedown = () => gas=true; gasBtn.onmouseup = () => gas=false; gasBtn.ontouchstart = e=>{e.preventDefault(); gas=true;}; gasBtn.ontouchend = ()=>gas=false;
-        brakeBtn.onmousedown = () => brake=true; brakeBtn.onmouseup = () => brake=false; brakeBtn.ontouchstart = e=>{e.preventDefault(); brake=true;}; brakeBtn.ontouchend = ()=>brake=false;
-        leftBtn.onmousedown = () => left=true; leftBtn.onmouseup = () => left=false; leftBtn.ontouchstart = e=>{e.preventDefault(); left=true;}; leftBtn.ontouchend = ()=>left=false;
-        rightBtn.onmousedown = () => right=true; rightBtn.onmouseup = () => right=false; rightBtn.ontouchstart = e=>{e.preventDefault(); right=true;}; rightBtn.ontouchend = ()=>right=false;
+        const gasBtn = document.getElementById('gasBtn'), brakeBtn = document.getElementById('brakeBtn');
+        const leftTurn = document.getElementById('leftTurnBtn'), rightTurn = document.getElementById('rightTurnBtn');
+        gasBtn.onmousedown = () => gas=true; gasBtn.onmouseup = () => gas=false;
+        gasBtn.ontouchstart = e=>{e.preventDefault(); gas=true;}; gasBtn.ontouchend = ()=>gas=false;
+        brakeBtn.onmousedown = () => brake=true; brakeBtn.onmouseup = () => brake=false;
+        brakeBtn.ontouchstart = e=>{e.preventDefault(); brake=true;}; brakeBtn.ontouchend = ()=>brake=false;
+        leftTurn.onmousedown = () => turnLeft=true; leftTurn.onmouseup = () => turnLeft=false;
+        leftTurn.ontouchstart = e=>{e.preventDefault(); turnLeft=true;}; leftTurn.ontouchend = ()=>turnLeft=false;
+        rightTurn.onmousedown = () => turnRight=true; rightTurn.onmouseup = () => turnRight=false;
+        rightTurn.ontouchstart = e=>{e.preventDefault(); turnRight=true;}; rightTurn.ontouchend = ()=>turnRight=false;
         
         document.getElementById('startRaceBtn').onclick = () => {
             if(animFrame) cancelAnimationFrame(animFrame);
-            initRace();
+            lapProgress = 0; laps = 0; overtakes = 0; speed = 0;
+            for(let i=0;i<opponents.length;i++) { opponents[i].progress = Math.random() * 0.9; opponents[i].overtaken = false; }
+            currentPosition = 6;
+            gas=false; brake=false; turnLeft=false; turnRight=false;
             raceActive = true;
             updateGame();
         };
         
-        canvas.width = 1000; canvas.height = 650;
-        initRace();
+        canvas.width = 900; canvas.height = 600;
+        updateGrip();
     }, 'gameRacing');
 
-    // ОСТАЛЬНЫЕ 14 МИНИ-ИГР (КОРОТКО, ПОЛНОСТЬЮ РАБОЧИЕ)
+    // ОСТАЛЬНЫЕ 14 МИНИ-ИГР (КОРОТКО)
     const miniGames = [
         { title: '⏱️ REACTION PIT STOP', fn: (c) => { c.innerHTML = `<div>Click when light turns GREEN</div><div id="pitStatus" style="margin:12px 0;font-size:20px;font-weight:800;">🔴 WAITING</div><button id="pitBtn">START</button><div id="pitResult" class="game-stats"></div>`;
             let pitTimer=null, pitStart=null, pitActive=false;
