@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>F1 2026 // SIDE RACING (HORIZONTAL)</title>
+    <title>F1 2026 // SIDE RACING (UPWARD)</title>
     <link rel="stylesheet" href="style.css">
     <style>
         .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 24px; }
@@ -33,9 +33,9 @@
         <a href="news.html">NEWS</a>
         <a href="games.html" class="active">GAMES</a>
     </div>
-    <h1>🏁 SIDE RACING · HORIZONTAL TRACK</h1>
+    <h1>🏁 SIDE RACING · UPWARD TRACK</h1>
     <div class="games-grid" id="gamesGrid"></div>
-    <div class="footer">⚡ GAS (→) / BRAKE (←) / UP/DOWN (↑↓) · SIDE VIEW</div>
+    <div class="footer">⚡ GAS (↑) / BRAKE (↓) / LEFT/RIGHT (◀ ▶) · SIDE VIEW</div>
 </div>
 
 <script>
@@ -50,8 +50,8 @@
         if (container) contentFn(container);
     }
 
-    // ========== ГОРИЗОНТАЛЬНАЯ ГОНКА (ВИД СБОКУ) ==========
-    createGameCard('🏁 SIDE RACING · TRACK SELECT', (cont) => {
+    // ========== ГОРИЗОНТАЛЬНАЯ ГОНКА (ВИД СБОКУ, ДОРОГА СНИЗУ ВВЕРХ) ==========
+    createGameCard('🏁 SIDE RACING · UPWARD', (cont) => {
         cont.innerHTML = `
             <div>Select driver:</div>
             <select id="racingDriver">
@@ -70,13 +70,13 @@
                 <option value="baku">🇦🇿 BAKU</option>
             </select>
             <div class="race-canvas-container">
-                <canvas id="raceCanvas" width="1100" height="500" style="width:100%; height:auto; max-width:1100px; aspect-ratio:1100/500"></canvas>
+                <canvas id="raceCanvas" width="800" height="700" style="width:100%; height:auto; max-width:800px; aspect-ratio:800/700"></canvas>
             </div>
             <div class="race-controls">
-                <button id="gasBtn">⚡ GAS (→)</button>
-                <button id="brakeBtn">🛑 BRAKE (←)</button>
-                <button id="upBtn">⬆️ UP</button>
-                <button id="downBtn">⬇️ DOWN</button>
+                <button id="gasBtn">⚡ GAS (↑)</button>
+                <button id="brakeBtn">🛑 BRAKE (↓)</button>
+                <button id="leftBtn">◀ LEFT</button>
+                <button id="rightBtn">RIGHT ▶</button>
             </div>
             <div id="raceInfo" style="font-family:monospace; margin-top:12px; display:flex; justify-content:space-between; flex-wrap:wrap;">
                 <span>🏁 LAPS: <span id="lapCount">0</span>/5</span>
@@ -93,12 +93,12 @@
         let animationId = null;
         let raceActive = false;
         
-        // ГОРИЗОНТАЛЬНАЯ ФИЗИКА
-        let player = { x: 100, y: 240, width: 55, height: 40, speed: 0 };
+        // Игрок – видим сбоку, едет вверх
+        let player = { x: canvas.width/2 - 25, y: canvas.height - 90, width: 50, height: 65, speed: 0 };
         const ACC = 0.65;
         const BRAKE_FORCE = 0.85;
         const FRICTION = 0.98;
-        const MAX_SPEED = 18;
+        const MAX_SPEED = 14;
         
         let opponents = [];
         let laps = 0;
@@ -106,43 +106,51 @@
         let finishLineCrossed = false;
         let currentPosition = 8;
         
-        const TRACK_LEFT = 40;
-        const TRACK_RIGHT = canvas.width - 40;
-        const FINISH_LINE_X = canvas.width - 80;
+        const FINISH_LINE_Y = 50;
         
         let gasPressed = false;
         let brakePressed = false;
-        let upPressed = false;
-        let downPressed = false;
+        let leftPressed = false;
+        let rightPressed = false;
         
         function drawTrackBackground(trackId) {
-            const grad = ctx.createLinearGradient(0, 0, canvas.width, 0);
+            const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
             if(trackId === 'monaco') {
                 grad.addColorStop(0, '#1a2a3a'); grad.addColorStop(1, '#2a3a4a');
                 ctx.fillStyle = grad; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#ffd700'; ctx.font = 'bold 28px monospace'; ctx.fillText('🇲🇨 MONACO', 40, 50);
-                for(let i=0;i<15;i++) ctx.fillRect(200 + i*60, 150, 10, 80);
+                ctx.fillStyle = '#ffd700'; ctx.font = 'bold 24px monospace'; ctx.fillText('🇲🇨 MONACO', 20, 40);
             } else if(trackId === 'monza') {
                 grad.addColorStop(0, '#1a3a1a'); grad.addColorStop(1, '#2a4a2a');
                 ctx.fillStyle = grad; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#00ff00'; ctx.font = 'bold 28px monospace'; ctx.fillText('🇮🇹 MONZA', 40, 50);
-                for(let i=0;i<12;i++) ctx.fillRect(100 + i*80, 350, 15, 60);
+                ctx.fillStyle = '#00ff00'; ctx.font = 'bold 24px monospace'; ctx.fillText('🇮🇹 MONZA', 20, 40);
             } else if(trackId === 'silverstone') {
                 grad.addColorStop(0, '#2a2a3a'); grad.addColorStop(1, '#3a3a4a');
                 ctx.fillStyle = grad; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#00aaff'; ctx.font = 'bold 28px monospace'; ctx.fillText('🇬🇧 SILVERSTONE', 40, 50);
-                for(let i=0;i<18;i++) ctx.fillRect(120 + i*55, 280, 8, 90);
+                ctx.fillStyle = '#00aaff'; ctx.font = 'bold 24px monospace'; ctx.fillText('🇬🇧 SILVERSTONE', 20, 40);
             } else if(trackId === 'spa') {
                 grad.addColorStop(0, '#2a3a2a'); grad.addColorStop(1, '#3a4a3a');
                 ctx.fillStyle = grad; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#88ff88'; ctx.font = 'bold 28px monospace'; ctx.fillText('🇧🇪 SPA', 40, 50);
-                for(let i=0;i<20;i++) ctx.fillRect(80 + i*50, 200, 10, 70);
+                ctx.fillStyle = '#88ff88'; ctx.font = 'bold 24px monospace'; ctx.fillText('🇧🇪 SPA', 20, 40);
             } else {
                 grad.addColorStop(0, '#3a2a1a'); grad.addColorStop(1, '#4a3a2a');
                 ctx.fillStyle = grad; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#ffaa44'; ctx.font = 'bold 28px monospace'; ctx.fillText('🇦🇿 BAKU', 40, 50);
-                for(let i=0;i<22;i++) ctx.fillRect(60 + i*45, 400, 8, 60);
+                ctx.fillStyle = '#ffaa44'; ctx.font = 'bold 24px monospace'; ctx.fillText('🇦🇿 BAKU', 20, 40);
             }
+            // дорога
+            ctx.fillStyle = '#1a1f2c';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#2a2f3a';
+            ctx.fillRect(80, 0, canvas.width-160, canvas.height);
+            // разметка (пунктир)
+            for(let i = 0; i < 20; i++) {
+                ctx.fillStyle = i % 2 === 0 ? '#ff003c' : '#ffffff';
+                ctx.fillRect(canvas.width/2 - 12, 40 + i*40, 24, 12);
+            }
+            ctx.fillStyle = '#ff003c';
+            ctx.fillRect(0, FINISH_LINE_Y, canvas.width, 6);
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 16px monospace';
+            ctx.fillText('FINISH', canvas.width/2 - 35, FINISH_LINE_Y + 20);
         }
         
         function getDriverColor(driverName) {
@@ -154,33 +162,33 @@
         
         function initRace() {
             opponents = [];
-            for(let i = 0; i < 7; i++) {
+            for(let i = 0; i < 6; i++) {
                 opponents.push({
-                    x: TRACK_LEFT + 80 + Math.random() * (TRACK_RIGHT - TRACK_LEFT - 150),
-                    y: 40 + Math.random() * (canvas.height - 100),
-                    width: 55,
-                    height: 40,
-                    baseSpeed: 1.5 + Math.random() * 2.2,
+                    x: 100 + Math.random() * (canvas.width - 200),
+                    y: 120 + Math.random() * (canvas.height - 250),
+                    width: 48,
+                    height: 62,
+                    baseSpeed: 1.3 + Math.random() * 2.0,
                     passed: false
                 });
             }
             laps = 0;
             overtakes = 0;
             finishLineCrossed = false;
-            player.x = TRACK_LEFT + 20;
-            player.y = canvas.height/2 - 20;
+            player.y = canvas.height - 90;
+            player.x = canvas.width/2 - 25;
             player.speed = 0;
             currentPosition = 8;
-            gasPressed = false; brakePressed = false; upPressed = false; downPressed = false;
+            gasPressed = false; brakePressed = false; leftPressed = false; rightPressed = false;
             document.getElementById('lapCount').innerText = laps;
             document.getElementById('overtakesCount').innerText = overtakes;
             document.getElementById('positionText').innerText = 'P8';
             document.getElementById('speedDisplay').innerText = '0';
-            document.getElementById('raceMessage').innerHTML = '🏁 PRESS GAS (→) TO START 🏁';
+            document.getElementById('raceMessage').innerHTML = '🏁 PRESS GAS (↑) TO START 🏁';
         }
         
         function updatePosition() {
-            let ahead = opponents.filter(o => o.x > player.x + 10).length;
+            let ahead = opponents.filter(o => o.y < player.y - 20).length;
             let pos = ahead + 1;
             currentPosition = Math.min(pos, 8);
             document.getElementById('positionText').innerText = `P${currentPosition}`;
@@ -196,40 +204,41 @@
             player.speed *= FRICTION;
             if(player.speed < 0.1 && !gasPressed && !brakePressed) player.speed = 0;
             
-            player.x += player.speed;
-            if(player.x > TRACK_RIGHT - player.width) player.x = TRACK_RIGHT - player.width;
-            if(player.x < TRACK_LEFT) player.x = TRACK_LEFT;
+            let moveY = player.speed * 2.5;
+            player.y -= moveY;
+            if(player.y < FINISH_LINE_Y + 20) player.y = FINISH_LINE_Y + 20;
+            if(player.y > canvas.height - 70) player.y = canvas.height - 70;
             
-            if(upPressed) player.y -= 6;
-            if(downPressed) player.y += 6;
-            if(player.y < 30) player.y = 30;
-            if(player.y > canvas.height - player.height - 20) player.y = canvas.height - player.height - 20;
+            if(leftPressed) player.x -= 8;
+            if(rightPressed) player.x += 8;
+            if(player.x < 90) player.x = 90;
+            if(player.x > canvas.width - player.width - 90) player.x = canvas.width - player.width - 90;
             
             for(let opp of opponents) {
-                let effectiveSpeed = opp.baseSpeed * (0.7 + Math.random() * 0.8);
-                opp.x -= effectiveSpeed;
-                if(opp.x + opp.width < TRACK_LEFT) {
-                    opp.x = TRACK_RIGHT;
-                    opp.y = 40 + Math.random() * (canvas.height - 100);
+                let effectiveSpeed = opp.baseSpeed * (0.7 + Math.random() * 0.9);
+                opp.y -= effectiveSpeed;
+                if(opp.y + opp.height < FINISH_LINE_Y) {
+                    opp.y = canvas.height - 80;
+                    opp.x = 100 + Math.random() * (canvas.width - 200);
                     opp.passed = false;
                 }
-                if(opp.x + opp.width < FINISH_LINE_X && !opp.passed) opp.passed = true;
+                if(opp.y + opp.height < FINISH_LINE_Y + 10 && !opp.passed) opp.passed = true;
             }
             
             for(let opp of opponents) {
                 if(player.x < opp.x + opp.width && player.x + player.width > opp.x &&
                    player.y < opp.y + opp.height && player.y + player.height > opp.y) {
                     player.speed = Math.max(0, player.speed - 4);
-                    player.x -= 20;
-                    if(player.x < TRACK_LEFT) player.x = TRACK_LEFT;
+                    player.y += 25;
+                    if(player.y > canvas.height - 70) player.y = canvas.height - 70;
                     document.getElementById('raceMessage').innerHTML = '⚠️ COLLISION! ⚠️';
                     setTimeout(() => { if(raceActive) document.getElementById('raceMessage').innerHTML = '🏁 RACING 🏁'; }, 700);
                 }
             }
             
             for(let opp of opponents) {
-                if(!opp.passed && player.x + player.width > opp.x + 5 && player.x < opp.x + opp.width) {
-                    if(Math.abs(player.y - opp.y) < 30) {
+                if(!opp.passed && player.y + player.height < opp.y + 10 && player.y < opp.y) {
+                    if(Math.abs(player.x - opp.x) < 40) {
                         opp.passed = true;
                         overtakes++;
                         document.getElementById('overtakesCount').innerText = overtakes;
@@ -239,7 +248,7 @@
                 }
             }
             
-            if(player.x + player.width > FINISH_LINE_X && !finishLineCrossed) {
+            if(player.y + player.height < FINISH_LINE_Y + 10 && !finishLineCrossed) {
                 finishLineCrossed = true;
                 laps++;
                 document.getElementById('lapCount').innerText = laps;
@@ -255,38 +264,24 @@
                     if(animationId) cancelAnimationFrame(animationId);
                     return;
                 }
-                setTimeout(() => { finishLineCrossed = false; }, 500);
+                setTimeout(() => { finishLineCrossed = false; }, 800);
             }
+            if(player.y + player.height > FINISH_LINE_Y + 40) finishLineCrossed = false;
             
             updatePosition();
-            document.getElementById('speedDisplay').innerText = Math.floor(player.speed * 14);
+            document.getElementById('speedDisplay').innerText = Math.floor(player.speed * 12);
             
             drawTrackBackground(trackId);
             
-            ctx.fillStyle = '#2a2f3a';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#3a3f4a';
-            ctx.fillRect(TRACK_LEFT-5, 0, TRACK_RIGHT - TRACK_LEFT + 10, canvas.height);
-            ctx.fillStyle = '#1a1f2a';
-            ctx.fillRect(TRACK_LEFT, 0, TRACK_RIGHT - TRACK_LEFT, canvas.height);
-            for(let i = 0; i < 25; i++) {
-                ctx.fillStyle = i % 2 === 0 ? '#ff003c' : '#ffffff';
-                ctx.fillRect(TRACK_LEFT + 30 + i*45, canvas.height-25, 20, 8);
-            }
-            ctx.fillStyle = '#ff003c';
-            ctx.fillRect(FINISH_LINE_X - 8, 0, 10, canvas.height);
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 16px monospace';
-            ctx.fillText('FINISH', FINISH_LINE_X - 40, canvas.height-20);
-            
+            // соперники
             for(let opp of opponents) {
                 ctx.fillStyle = '#4a5568';
                 ctx.fillRect(opp.x, opp.y, opp.width, opp.height);
                 ctx.fillStyle = '#2d3748';
-                ctx.fillRect(opp.x+5, opp.y+8, opp.width-10, 12);
+                ctx.fillRect(opp.x+8, opp.y+10, opp.width-16, 14);
                 ctx.fillStyle = '#a0aec0';
-                ctx.fillRect(opp.x+10, opp.y+28, 8, 14);
-                ctx.fillRect(opp.x+opp.width-18, opp.y+28, 8, 14);
+                ctx.fillRect(opp.x+12, opp.y+35, 10, 16);
+                ctx.fillRect(opp.x+opp.width-22, opp.y+35, 10, 16);
             }
             
             const driverName = document.getElementById('racingDriver').options[document.getElementById('racingDriver').selectedIndex]?.text || 'Max Verstappen';
@@ -294,8 +289,8 @@
             ctx.fillStyle = playerColor;
             ctx.fillRect(player.x, player.y, player.width, player.height);
             ctx.fillStyle = '#111';
-            ctx.fillRect(player.x+8, player.y+8, 10, 12);
-            ctx.fillRect(player.x+player.width-18, player.y+8, 10, 12);
+            ctx.fillRect(player.x+12, player.y+12, 10, 16);
+            ctx.fillRect(player.x+player.width-22, player.y+12, 10, 16);
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 11px monospace';
             ctx.fillText(driverName.split(' ')[0], player.x+8, player.y-5);
@@ -305,8 +300,8 @@
         
         const gasBtn = document.getElementById('gasBtn');
         const brakeBtn = document.getElementById('brakeBtn');
-        const upBtn = document.getElementById('upBtn');
-        const downBtn = document.getElementById('downBtn');
+        const leftBtn = document.getElementById('leftBtn');
+        const rightBtn = document.getElementById('rightBtn');
         
         gasBtn.onmousedown = () => { gasPressed = true; };
         gasBtn.onmouseup = () => { gasPressed = false; };
@@ -318,15 +313,15 @@
         brakeBtn.ontouchstart = (e) => { e.preventDefault(); brakePressed = true; };
         brakeBtn.ontouchend = () => { brakePressed = false; };
         
-        upBtn.onmousedown = () => { upPressed = true; };
-        upBtn.onmouseup = () => { upPressed = false; };
-        upBtn.ontouchstart = (e) => { e.preventDefault(); upPressed = true; };
-        upBtn.ontouchend = () => { upPressed = false; };
+        leftBtn.onmousedown = () => { leftPressed = true; };
+        leftBtn.onmouseup = () => { leftPressed = false; };
+        leftBtn.ontouchstart = (e) => { e.preventDefault(); leftPressed = true; };
+        leftBtn.ontouchend = () => { leftPressed = false; };
         
-        downBtn.onmousedown = () => { downPressed = true; };
-        downBtn.onmouseup = () => { downPressed = false; };
-        downBtn.ontouchstart = (e) => { e.preventDefault(); downPressed = true; };
-        downBtn.ontouchend = () => { downPressed = false; };
+        rightBtn.onmousedown = () => { rightPressed = true; };
+        rightBtn.onmouseup = () => { rightPressed = false; };
+        rightBtn.ontouchstart = (e) => { e.preventDefault(); rightPressed = true; };
+        rightBtn.ontouchend = () => { rightPressed = false; };
         
         document.getElementById('startRaceBtn').onclick = () => {
             if(animationId) cancelAnimationFrame(animationId);
@@ -335,12 +330,12 @@
             updateGame();
         };
         
-        canvas.width = 1100;
-        canvas.height = 500;
+        canvas.width = 800;
+        canvas.height = 700;
         initRace();
     }, 'gameRacing');
 
-    // ========== ОСТАЛЬНЫЕ 14 ИГР (КОРОТКО) ==========
+    // ========== ОСТАЛЬНЫЕ 14 МИНИ-ИГР (КОРОТКО) ==========
     createGameCard('⏱️ REACTION PIT STOP', (cont) => {
         cont.innerHTML = `<div>Click when light turns GREEN</div><div id="pitStatus" style="margin:12px 0;font-size:20px;font-weight:800;">🔴 WAITING</div><button id="pitBtn">START</button><div id="pitResult" class="game-stats"></div>`;
         let pitTimer=null, pitStart=null, pitActive=false;
@@ -440,50 +435,4 @@
         const tempValue=document.getElementById('tempValue'), tempResult=document.getElementById('tempResult'), tempStartBtn=document.getElementById('tempStartBtn');
         function updateTarget(){ target=Math.floor(Math.random()*1000); tempValue.innerText=`${target}°`; }
         tempStartBtn.onclick=()=>{ updateTarget(); tempResult.innerHTML=''; score=0; };
-        document.getElementById('tempSlider').onclick=(e)=>{ const rect=e.currentTarget.getBoundingClientRect(); const x=e.clientX-rect.left; const percent=x/rect.width; const clickVal=Math.floor(percent*1000); const diff=Math.abs(clickVal-target); const points=Math.max(0,500-diff); score+=points; tempResult.innerHTML=`+${points} (total ${score})`; updateTarget(); };
-        updateTarget();
-    },'game10');
-    createGameCard('⛽ FUEL SAVING', (cont) => {
-        cont.innerHTML = `<div>Click when fuel ≤ 50 (0–100)</div><div id="fuelValue" class="big-number">50</div><button id="fuelStartBtn">NEW LAP</button><div id="fuelResult" class="game-stats"></div>`;
-        let fuel=50, active=true, interval=null;
-        const fuelValue=document.getElementById('fuelValue'), fuelResult=document.getElementById('fuelResult'), fuelStartBtn=document.getElementById('fuelStartBtn');
-        function startFuel(){ if(interval) clearInterval(interval); active=true; fuel=Math.floor(Math.random()*80)+20; fuelValue.innerText=fuel; interval=setInterval(()=>{ if(active && fuel>0){ fuel--; fuelValue.innerText=fuel; } },200); }
-        fuelStartBtn.onclick=()=>{ startFuel(); fuelResult.innerHTML=''; };
-        document.addEventListener('click',()=>{ if(active && fuel<=50){ fuelResult.innerHTML='✅ PERFECT SAVING! +1 LAP'; active=false; if(interval) clearInterval(interval); } else if(active){ fuelResult.innerHTML='❌ TOO EARLY! FUEL WASTED'; active=false; if(interval) clearInterval(interval); } });
-        startFuel();
-    },'game11');
-    createGameCard('🕒 PIT WINDOW', (cont) => {
-        cont.innerHTML = `<div>Click when timer between 10–20</div><div id="pitTimer" class="big-number">0</div><button id="pitWindowStart">RESET</button><div id="pitWindowResult" class="game-stats"></div>`;
-        let time=0, running=true, interval=null;
-        const pitTimer=document.getElementById('pitTimer'), pitWindowResult=document.getElementById('pitWindowResult'), pitWindowStart=document.getElementById('pitWindowStart');
-        function resetTimer(){ if(interval) clearInterval(interval); time=0; running=true; pitTimer.innerText='0'; interval=setInterval(()=>{ if(running){ time+=0.1; pitTimer.innerText=time.toFixed(1); } },100); }
-        pitWindowStart.onclick=()=>{ resetTimer(); pitWindowResult.innerHTML=''; };
-        document.addEventListener('click',()=>{ if(running){ const t=parseFloat(pitTimer.innerText); if(t>=10 && t<=20){ pitWindowResult.innerHTML=`✅ PERFECT PIT! (${t.toFixed(1)}s)`; running=false; clearInterval(interval); } else { pitWindowResult.innerHTML=`❌ BAD WINDOW (${t.toFixed(1)}s)`; running=false; clearInterval(interval); } } });
-        resetTimer();
-    },'game12');
-    createGameCard('🚥 GRID START', (cont) => {
-        cont.innerHTML = `<div>Click when lights go OUT</div><div id="lights" style="font-size:28px;">🔴🔴🔴🔴🔴</div><button id="gridStartBtn">RESTART</button><div id="gridResult" class="game-stats"></div>`;
-        let active=false, startTime=null, timeout=null;
-        const lights=document.getElementById('lights'), gridResult=document.getElementById('gridResult'), gridStartBtn=document.getElementById('gridStartBtn');
-        function startLights(){ if(timeout) clearTimeout(timeout); active=true; startTime=null; let count=0; lights.innerHTML='🔴🔴🔴🔴🔴'; const int=setInterval(()=>{ if(count<4){ lights.innerHTML=lights.innerHTML.slice(0,-2); count++; } else { clearInterval(int); const delay=Math.random()*3000+500; timeout=setTimeout(()=>{ if(active){ lights.innerHTML='⚫⚫⚫⚫⚫'; startTime=Date.now(); } },delay); } },800); }
-        gridStartBtn.onclick=()=>{ startLights(); gridResult.innerHTML=''; };
-        document.addEventListener('click',(e)=>{ if(active && startTime && e.target!==gridStartBtn){ const react=Date.now()-startTime; gridResult.innerHTML=`✅ ${react} ms`; active=false; if(timeout) clearTimeout(timeout); } });
-        startLights();
-    },'game13');
-    createGameCard('🚨 SAFETY CAR', (cont) => {
-        cont.innerHTML = `<div>Guess safety car number (1–20)</div><input id="scGuess" type="number" min="1" max="20"><button id="scCheckBtn">GUESS</button><div id="scResult" class="game-stats"></div>`;
-        let secret=Math.floor(Math.random()*20)+1;
-        const scResult=document.getElementById('scResult'), scGuess=document.getElementById('scGuess'), scCheckBtn=document.getElementById('scCheckBtn');
-        scCheckBtn.onclick=()=>{ const guess=parseInt(scGuess.value); if(guess===secret){ scResult.innerHTML='✅ YOU CAUGHT THE SAFETY CAR!'; secret=Math.floor(Math.random()*20)+1; } else { scResult.innerHTML=`❌ WRONG → it was ${secret}`; secret=Math.floor(Math.random()*20)+1; } scGuess.value=''; };
-    },'game14');
-    createGameCard('💨 FASTEST LAP', (cont) => {
-        cont.innerHTML = `<div>Which colour is fastest? (red/blue/silver)</div><div class="flex-buttons"><button id="colorRed">RED</button><button id="colorBlue">BLUE</button><button id="colorSilver">SILVER</button></div><div id="colorResult" class="game-stats"></div>`;
-        const colorResult=document.getElementById('colorResult');
-        const check=(c)=>{ const correct='red'; colorResult.innerHTML=(c===correct)?'✅ FASTEST LAP! +1':'❌ WRONG, red bull is red'; };
-        document.getElementById('colorRed').onclick=()=>check('red');
-        document.getElementById('colorBlue').onclick=()=>check('blue');
-        document.getElementById('colorSilver').onclick=()=>check('silver');
-    },'game15');
-</script>
-</body>
-</html>
+        document.getElementById('tempSlider').onclick=(e)=>{ const rect=e
