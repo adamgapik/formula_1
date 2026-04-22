@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>F1 2026 // RACING HILLS</title>
+    <title>F1 2026 // SIDE RACING</title>
     <link rel="stylesheet" href="style.css">
     <style>
         .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 24px; }
@@ -33,9 +33,9 @@
         <a href="news.html">NEWS</a>
         <a href="games.html" class="active">GAMES</a>
     </div>
-    <h1>🏁 RACING HILLS · GAS / BRAKE</h1>
+    <h1>🏁 SIDE RACING · GAS / BRAKE</h1>
     <div class="games-grid" id="gamesGrid"></div>
-    <div class="footer">⚡ GAS (↑) / BRAKE (↓) / STEERING (◀ ▶)</div>
+    <div class="footer">⚡ GAS (↑) / BRAKE (↓) / STEERING (◀ ▶) · SIDE VIEW</div>
 </div>
 
 <script>
@@ -50,10 +50,10 @@
         if (container) contentFn(container);
     }
 
-    // ========== RACING HILLS С ГАЗОМ, ТОРМОЗОМ И ФИЗИКОЙ ==========
-    createGameCard('🏎️ RACING HILLS · PHYSICS', (cont) => {
+    // ========== НАСТОЯЩАЯ ГОНКА: ВИД СБОКУ, ВЫБОР ТРАССЫ, ГАЗ/ТОРМОЗ ==========
+    createGameCard('🏁 SIDE RACING · TRACK SELECT', (cont) => {
         cont.innerHTML = `
-            <div>Select your driver:</div>
+            <div>Select driver:</div>
             <select id="racingDriver">
                 <option value="Max Verstappen">Max Verstappen (Red Bull)</option>
                 <option value="Lewis Hamilton">Lewis Hamilton (Ferrari)</option>
@@ -61,8 +61,16 @@
                 <option value="Charles Leclerc">Charles Leclerc (Ferrari)</option>
                 <option value="George Russell">George Russell (Mercedes)</option>
             </select>
+            <div style="margin-top:12px;">Select track:</div>
+            <select id="trackSelect">
+                <option value="monaco">🇲🇨 MONACO (street circuit)</option>
+                <option value="monza">🇮🇹 MONZA (temple of speed)</option>
+                <option value="silverstone">🇬🇧 SILVERSTONE (high speed)</option>
+                <option value="spa">🇧🇪 SPA-FRANCORCHAMPS</option>
+                <option value="baku">🇦🇿 BAKU (street race)</option>
+            </select>
             <div class="race-canvas-container">
-                <canvas id="raceCanvas" width="900" height="450" style="width:100%; height:auto; max-width:900px; aspect-ratio:900/450"></canvas>
+                <canvas id="raceCanvas" width="1000" height="500" style="width:100%; height:auto; max-width:1000px; aspect-ratio:1000/500"></canvas>
             </div>
             <div class="race-controls">
                 <button id="gasBtn">⚡ GAS (↑)</button>
@@ -86,13 +94,12 @@
         let raceActive = false;
         
         // Физика игрока
-        let player = { x: 420, y: 360, width: 42, height: 52, speed: 0 };
-        const ACC = 0.6;
-        const BRAKE_FORCE = 0.9;
+        let player = { x: 480, y: 380, width: 45, height: 55, speed: 0 };
+        const ACC = 0.55;
+        const BRAKE_FORCE = 0.88;
         const FRICTION = 0.98;
-        const MAX_SPEED = 18;
+        const MAX_SPEED = 16;
         
-        // Соперники
         let opponents = [];
         let laps = 0;
         let overtakes = 0;
@@ -100,13 +107,44 @@
         let currentPosition = 8;
         
         const TRACK_TOP = 60;
-        const TRACK_BOTTOM = 390;
+        const TRACK_BOTTOM = 440;
         const FINISH_LINE_Y = 70;
         
         let gasPressed = false;
         let brakePressed = false;
         let leftPressed = false;
         let rightPressed = false;
+        
+        // Фоновые изображения трасс (цветные градиенты + элементы)
+        function drawTrackBackground(trackId) {
+            const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            if(trackId === 'monaco') {
+                grad.addColorStop(0, '#1a2a3a'); grad.addColorStop(1, '#2a3a4a');
+                ctx.fillStyle = grad; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#ffd700'; ctx.font = 'bold 28px monospace'; ctx.fillText('🇲🇨 MONACO', canvas.width-180, 40);
+                for(let i=0;i<20;i++) ctx.fillRect(50 + i*45, 200, 15, 80);
+            } else if(trackId === 'monza') {
+                grad.addColorStop(0, '#1a3a1a'); grad.addColorStop(1, '#2a4a2a');
+                ctx.fillStyle = grad; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#00ff00'; ctx.font = 'bold 28px monospace'; ctx.fillText('🇮🇹 MONZA', canvas.width-160, 40);
+                for(let i=0;i<12;i++) ctx.fillRect(100 + i*70, 300, 20, 60);
+            } else if(trackId === 'silverstone') {
+                grad.addColorStop(0, '#2a2a3a'); grad.addColorStop(1, '#3a3a4a');
+                ctx.fillStyle = grad; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#00aaff'; ctx.font = 'bold 28px monospace'; ctx.fillText('🇬🇧 SILVERSTONE', canvas.width-220, 40);
+                for(let i=0;i<15;i++) ctx.fillRect(80 + i*55, 150, 10, 120);
+            } else if(trackId === 'spa') {
+                grad.addColorStop(0, '#2a3a2a'); grad.addColorStop(1, '#3a4a3a');
+                ctx.fillStyle = grad; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#88ff88'; ctx.font = 'bold 28px monospace'; ctx.fillText('🇧🇪 SPA', canvas.width-140, 40);
+                for(let i=0;i<18;i++) ctx.fillRect(60 + i*50, 250, 12, 100);
+            } else {
+                grad.addColorStop(0, '#3a2a1a'); grad.addColorStop(1, '#4a3a2a');
+                ctx.fillStyle = grad; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#ffaa44'; ctx.font = 'bold 28px monospace'; ctx.fillText('🇦🇿 BAKU', canvas.width-120, 40);
+                for(let i=0;i<22;i++) ctx.fillRect(40 + i*42, 350, 8, 50);
+            }
+        }
         
         function getDriverColor(driverName) {
             if(driverName.includes('Verstappen') || driverName.includes('Hamilton') || driverName.includes('Leclerc')) return '#e10600';
@@ -119,31 +157,28 @@
             opponents = [];
             for(let i = 0; i < 7; i++) {
                 opponents.push({
-                    x: 50 + Math.random() * 800,
-                    y: TRACK_TOP + 20 + Math.random() * (TRACK_BOTTOM - TRACK_TOP - 80),
-                    width: 40,
-                    height: 50,
-                    baseSpeed: 1.2 + Math.random() * 2.5,
-                    speed: 1.2 + Math.random() * 2.5,
+                    x: 50 + Math.random() * (canvas.width - 90),
+                    y: TRACK_TOP + 15 + Math.random() * (TRACK_BOTTOM - TRACK_TOP - 70),
+                    width: 42,
+                    height: 52,
+                    baseSpeed: 1.3 + Math.random() * 2.2,
+                    speed: 1.3 + Math.random() * 2.2,
                     passed: false
                 });
             }
             laps = 0;
             overtakes = 0;
             finishLineCrossed = false;
-            player.y = 360;
-            player.x = 420;
+            player.y = 400;
+            player.x = canvas.width/2 - 22;
             player.speed = 0;
             currentPosition = 8;
-            gasPressed = false;
-            brakePressed = false;
-            leftPressed = false;
-            rightPressed = false;
+            gasPressed = false; brakePressed = false; leftPressed = false; rightPressed = false;
             document.getElementById('lapCount').innerText = laps;
             document.getElementById('overtakesCount').innerText = overtakes;
             document.getElementById('positionText').innerText = 'P8';
             document.getElementById('speedDisplay').innerText = '0';
-            document.getElementById('raceMessage').innerHTML = '🏁 RACE STARTED! GAS (↑) / BRAKE (↓) 🏁';
+            document.getElementById('raceMessage').innerHTML = '🏁 PRESS GAS (↑) TO START 🏁';
         }
         
         function updatePosition() {
@@ -156,61 +191,45 @@
         function updateGame() {
             if(!raceActive) return;
             
-            // Физика газа / тормоза / трения
-            if(gasPressed) {
-                player.speed += ACC;
-                if(player.speed > MAX_SPEED) player.speed = MAX_SPEED;
-            }
-            if(brakePressed) {
-                player.speed *= BRAKE_FORCE;
-                if(player.speed < 0) player.speed = 0;
-            }
+            const trackId = document.getElementById('trackSelect').value;
+            
+            if(gasPressed) { player.speed += ACC; if(player.speed > MAX_SPEED) player.speed = MAX_SPEED; }
+            if(brakePressed) { player.speed *= BRAKE_FORCE; if(player.speed < 0) player.speed = 0; }
             player.speed *= FRICTION;
             if(player.speed < 0.1 && !gasPressed && !brakePressed) player.speed = 0;
             
-            // движение игрока по Y (вперёд/назад)
             let moveY = player.speed;
             player.y -= moveY;
-            
-            // границы трека по Y
             if(player.y < TRACK_TOP) player.y = TRACK_TOP;
             if(player.y > TRACK_BOTTOM - player.height) player.y = TRACK_BOTTOM - player.height;
             
-            // движение по X (влево/вправо)
             if(leftPressed) player.x -= 7;
             if(rightPressed) player.x += 7;
             if(player.x < 20) player.x = 20;
             if(player.x > canvas.width - player.width - 20) player.x = canvas.width - player.width - 20;
             
-            // движение соперников (с разной скоростью)
             for(let opp of opponents) {
-                let effectiveSpeed = opp.baseSpeed * (0.8 + Math.random() * 0.6);
+                let effectiveSpeed = opp.baseSpeed * (0.8 + Math.random() * 0.7);
                 opp.y -= effectiveSpeed;
                 if(opp.y + opp.height < TRACK_TOP) {
                     opp.y = TRACK_BOTTOM;
-                    opp.x = 50 + Math.random() * 800;
+                    opp.x = 50 + Math.random() * (canvas.width - 90);
                     opp.passed = false;
                 }
-                if(opp.y + opp.height < FINISH_LINE_Y && !opp.passed) {
-                    opp.passed = true;
-                }
+                if(opp.y + opp.height < FINISH_LINE_Y && !opp.passed) opp.passed = true;
             }
             
-            // столкновения
             for(let opp of opponents) {
                 if(player.x < opp.x + opp.width && player.x + player.width > opp.x &&
                    player.y < opp.y + opp.height && player.y + player.height > opp.y) {
                     player.speed = Math.max(0, player.speed - 5);
-                    player.y += 12;
+                    player.y += 15;
                     if(player.y > TRACK_BOTTOM - player.height) player.y = TRACK_BOTTOM - player.height;
-                    document.getElementById('raceMessage').innerHTML = '⚠️ COLLISION! LOST SPEED ⚠️';
-                    setTimeout(() => {
-                        if(raceActive) document.getElementById('raceMessage').innerHTML = '🏁 KEEP RACING 🏁';
-                    }, 800);
+                    document.getElementById('raceMessage').innerHTML = '⚠️ COLLISION! ⚠️';
+                    setTimeout(() => { if(raceActive) document.getElementById('raceMessage').innerHTML = '🏁 RACING 🏁'; }, 700);
                 }
             }
             
-            // обгоны (когда игрок проезжает мимо соперника)
             for(let opp of opponents) {
                 if(!opp.passed && player.y + player.height < opp.y + 10 && player.y < opp.y) {
                     if(player.x < opp.x + opp.width && player.x + player.width > opp.x) {
@@ -218,64 +237,48 @@
                         overtakes++;
                         document.getElementById('overtakesCount').innerText = overtakes;
                         document.getElementById('raceMessage').innerHTML = '✅ OVERTAKE! ✅';
-                        setTimeout(() => {
-                            if(raceActive) document.getElementById('raceMessage').innerHTML = '🏁 KEEP RACING 🏁';
-                        }, 500);
+                        setTimeout(() => { if(raceActive) document.getElementById('raceMessage').innerHTML = '🏁 RACING 🏁'; }, 500);
                     }
                 }
             }
             
-            // финиш круга
             if(player.y + player.height < FINISH_LINE_Y && !finishLineCrossed) {
                 finishLineCrossed = true;
                 laps++;
                 document.getElementById('lapCount').innerText = laps;
-                document.getElementById('raceMessage').innerHTML = `🏁 LAP ${laps} COMPLETED! 🏁`;
-                setTimeout(() => {
-                    if(raceActive) document.getElementById('raceMessage').innerHTML = '🏁 KEEP RACING 🏁';
-                }, 1000);
+                document.getElementById('raceMessage').innerHTML = `🏁 LAP ${laps}/5 🏁`;
                 if(laps >= 5) {
                     raceActive = false;
                     const driver = document.getElementById('racingDriver').options[document.getElementById('racingDriver').selectedIndex].text;
                     let message = '';
-                    if(currentPosition === 1) message = `🏆🏆🏆 VICTORY! ${driver} WINS THE RACE! ${overtakes} OVERTAKES! 🏆🏆🏆`;
-                    else if(currentPosition <= 3) message = `🎉 PODIUM! ${driver} FINISHES ${currentPosition} WITH ${overtakes} OVERTAKES! 🎉`;
-                    else message = `🏁 RACE FINISHED! ${driver} ENDS IN ${currentPosition}. OVERTAKES: ${overtakes} 🏁`;
+                    if(currentPosition === 1) message = `🏆 VICTORY! ${driver} WINS! ${overtakes} OVERTAKES 🏆`;
+                    else if(currentPosition <= 3) message = `🎉 PODIUM! ${driver} FINISHES ${currentPosition} 🎉`;
+                    else message = `🏁 FINISHED: ${driver} ENDS IN ${currentPosition}. OVERTAKES: ${overtakes} 🏁`;
                     document.getElementById('raceMessage').innerHTML = message;
                     if(animationId) cancelAnimationFrame(animationId);
                     return;
                 }
                 finishLineCrossed = false;
             }
-            if(player.y + player.height >= FINISH_LINE_Y + 10) finishLineCrossed = false;
+            if(player.y + player.height >= FINISH_LINE_Y + 15) finishLineCrossed = false;
             
             updatePosition();
-            document.getElementById('speedDisplay').innerText = Math.floor(player.speed * 15);
-            draw();
-            animationId = requestAnimationFrame(updateGame);
-        }
-        
-        function draw() {
-            if(!ctx) return;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            // асфальт
-            ctx.fillStyle = '#0f121c';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#1a1f2c';
+            document.getElementById('speedDisplay').innerText = Math.floor(player.speed * 14);
+            
+            drawTrackBackground(trackId);
+            
+            ctx.fillStyle = '#2a2f3a';
             ctx.fillRect(0, TRACK_TOP, canvas.width, TRACK_BOTTOM - TRACK_TOP);
-            // разметка
-            for(let i = 0; i < 30; i++) {
+            for(let i = 0; i < 25; i++) {
                 ctx.fillStyle = i % 2 === 0 ? '#ff003c' : '#ffffff';
-                ctx.fillRect(canvas.width/2 - 12, TRACK_TOP + i*22, 24, 10);
+                ctx.fillRect(canvas.width/2 - 12, TRACK_TOP + i*22, 24, 8);
             }
-            // линия финиша
             ctx.fillStyle = '#ff003c';
             ctx.fillRect(0, FINISH_LINE_Y - 5, canvas.width, 6);
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 14px monospace';
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 16px monospace';
             ctx.fillText('FINISH', canvas.width/2 - 35, FINISH_LINE_Y - 10);
             
-            // соперники
             for(let opp of opponents) {
                 ctx.fillStyle = '#4a5568';
                 ctx.fillRect(opp.x, opp.y, opp.width, opp.height);
@@ -286,7 +289,6 @@
                 ctx.fillRect(opp.x+opp.width-18, opp.y+28, 8, 14);
             }
             
-            // игрок
             const driverName = document.getElementById('racingDriver').options[document.getElementById('racingDriver').selectedIndex]?.text || 'Max Verstappen';
             const playerColor = getDriverColor(driverName);
             ctx.fillStyle = playerColor;
@@ -297,9 +299,10 @@
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 12px monospace';
             ctx.fillText(driverName.split(' ')[0], player.x+5, player.y-5);
+            
+            animationId = requestAnimationFrame(updateGame);
         }
         
-        // обработка кнопок
         const gasBtn = document.getElementById('gasBtn');
         const brakeBtn = document.getElementById('brakeBtn');
         const leftBtn = document.getElementById('leftBtn');
@@ -332,12 +335,12 @@
             updateGame();
         };
         
-        canvas.width = 900;
-        canvas.height = 450;
+        canvas.width = 1000;
+        canvas.height = 500;
         initRace();
     }, 'gameRacing');
 
-    // ========== ОСТАЛЬНЫЕ 14 МИНИ-ИГР ==========
+    // ========== ОСТАЛЬНЫЕ 14 МИНИ-ИГР (БЕЗ ИЗМЕНЕНИЙ) ==========
     createGameCard('⏱️ REACTION PIT STOP', (cont) => {
         cont.innerHTML = `<div>Click when light turns GREEN</div><div id="pitStatus" style="margin:12px 0;font-size:20px;font-weight:800;">🔴 WAITING</div><button id="pitBtn">START</button><div id="pitResult" class="game-stats"></div>`;
         let pitTimer=null, pitStart=null, pitActive=false;
